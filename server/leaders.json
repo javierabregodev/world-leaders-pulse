@@ -1,0 +1,276 @@
+[
+  {
+    "id": "modi",
+    "country": "India",
+    "countryCode": "IN",
+    "name": "Narendra Modi",
+    "handle": "@narendramodi",
+    "query": "(\"Narendra Modi\" OR @narendramodi) -is:retweet",
+    "trackerId": "400bdfb8-eab7-4aef-87da-c98c0b685486"
+  },
+  {
+    "id": "xi",
+    "country": "China",
+    "countryCode": "CN",
+    "name": "Xi Jinping",
+    "handle": null,
+    "query": "(\"Xi Jinping\") -is:retweet"
+  },
+  {
+    "id": "trump",
+    "country": "United States",
+    "countryCode": "US",
+    "name": "Donald Trump",
+    "handle": "@realDonaldTrump",
+    "query": "(\"Donald Trump\" OR @realDonaldTrump) -is:retweet",
+    "trackerId": "9531f7a3-fd88-486c-972c-5e4a2183264f"
+  },
+  {
+    "id": "prabowo",
+    "country": "Indonesia",
+    "countryCode": "ID",
+    "name": "Prabowo Subianto",
+    "handle": "@prabowo",
+    "query": "(\"Prabowo Subianto\" OR @prabowo) -is:retweet",
+    "trackerId": "a4ef1715-12d0-4dc1-99ef-1a75d7dc5c25"
+  },
+  {
+    "id": "sharif",
+    "country": "Pakistan",
+    "countryCode": "PK",
+    "name": "Shehbaz Sharif",
+    "handle": "@CMShehbaz",
+    "query": "(\"Shehbaz Sharif\" OR @CMShehbaz) -is:retweet",
+    "trackerId": "813d839f-e23a-4315-89a0-f4714f6223d7"
+  },
+  {
+    "id": "tinubu",
+    "country": "Nigeria",
+    "countryCode": "NG",
+    "name": "Bola Tinubu",
+    "handle": "@officialABAT",
+    "query": "(\"Bola Tinubu\" OR @officialABAT) -is:retweet",
+    "trackerId": "99ff7506-16db-4ac6-80c9-f28877990463"
+  },
+  {
+    "id": "lula",
+    "country": "Brazil",
+    "countryCode": "BR",
+    "name": "Luiz Inacio Lula da Silva",
+    "handle": "@LulaOficial",
+    "query": "(\"Lula\" OR @LulaOficial) -is:retweet",
+    "trackerId": "15468a1c-8dd8-4d51-b42f-85d8bef22265"
+  },
+  {
+    "id": "rahman",
+    "country": "Bangladesh",
+    "countryCode": "BD",
+    "name": "Tarique Rahman",
+    "handle": "@trahmanbnp",
+    "query": "(\"Tarique Rahman\" OR @trahmanbnp) -is:retweet",
+    "trackerId": "fecee252-30ba-424c-a47f-4f9a5d9cd856"
+  },
+  {
+    "id": "putin",
+    "country": "Russia",
+    "countryCode": "RU",
+    "name": "Vladimir Putin",
+    "handle": null,
+    "query": "(\"Vladimir Putin\") -is:retweet"
+  },
+  {
+    "id": "abiy",
+    "country": "Ethiopia",
+    "countryCode": "ET",
+    "name": "Abiy Ahmed",
+    "handle": "@AbiyAhmedAli",
+    "query": "(\"Abiy Ahmed\" OR @AbiyAhmedAli) -is:retweet",
+    "trackerId": "8a7b4f54-9187-4197-a446-5a4c2933a272"
+  },
+  {
+    "id": "sheinbaum",
+    "country": "Mexico",
+    "countryCode": "MX",
+    "name": "Claudia Sheinbaum",
+    "handle": "@Claudiashein",
+    "query": "(\"Claudia Sheinbaum\" OR @Claudiashein) -is:retweet",
+    "trackerId": "2f704e91-c43c-4c52-ac6b-feab6ebaa362"
+  },
+  {
+    "id": "takaichi",
+    "country": "Japan",
+    "countryCode": "JP",
+    "name": "Sanae Takaichi",
+    "handle": "@takaichi_sanae",
+    "query": "(\"Sanae Takaichi\" OR @takaichi_sanae) -is:retweet",
+    "trackerId": "0fdbd92e-180a-49b8-bfed-a75eeb687063"
+  },
+  {
+    "id": "sisi",
+    "country": "Egypt",
+    "countryCode": "EG",
+    "name": "Abdel Fattah el-Sisi",
+    "handle": "@AlsisiOfficial",
+    "query": "(\"Abdel Fattah el-Sisi\" OR \"el-Sisi\" OR @AlsisiOfficial) -is:retweet",
+    "trackerId": "a324b28f-3d2e-461f-bc14-0d438bf54f25"
+  },
+  {
+    "id": "marcos",
+    "country": "Philippines",
+    "countryCode": "PH",
+    "name": "Ferdinand Marcos Jr.",
+    "handle": "@bongbongmarcos",
+    "query": "(\"Bongbong Marcos\" OR @bongbongmarcos) -is:retweet",
+    "trackerId": "451f2302-bd14-4e70-ad6f-370e697977b4"
+  },
+  {
+    "id": "tshisekedi",
+    "country": "DR Congo",
+    "countryCode": "CD",
+    "name": "Felix Tshisekedi",
+    "handle": "@FelixUdps",
+    "query": "(\"Felix Tshisekedi\" OR \"Tshisekedi\" OR @FelixUdps) -is:retweet",
+    "trackerId": "7d081eb0-ee20-40a8-b0f3-61e4de8c13b3"
+  },
+  {
+    "id": "tolam",
+    "country": "Vietnam",
+    "countryCode": "VN",
+    "name": "To Lam",
+    "handle": null,
+    "query": "(\"To Lam\") -is:retweet"
+  },
+  {
+    "id": "pezeshkian",
+    "country": "Iran",
+    "countryCode": "IR",
+    "name": "Masoud Pezeshkian",
+    "handle": "@drpezeshkian",
+    "query": "(\"Masoud Pezeshkian\" OR \"Pezeshkian\" OR @drpezeshkian) -is:retweet",
+    "trackerId": "66d0dadb-52df-4590-8043-4552128bdc6f"
+  },
+  {
+    "id": "erdogan",
+    "country": "Turkey",
+    "countryCode": "TR",
+    "name": "Recep Tayyip Erdogan",
+    "handle": "@RTErdogan",
+    "query": "(\"Erdogan\" OR @RTErdogan) -is:retweet",
+    "trackerId": "63449d4f-35bd-49f1-9c7e-b4fed93618b4"
+  },
+  {
+    "id": "merz",
+    "country": "Germany",
+    "countryCode": "DE",
+    "name": "Friedrich Merz",
+    "handle": "@_FriedrichMerz",
+    "query": "(\"Friedrich Merz\" OR @_FriedrichMerz) -is:retweet",
+    "trackerId": "2f9676bf-fdda-4f92-abc8-a9fe6af0aedd"
+  },
+  {
+    "id": "samia",
+    "country": "Tanzania",
+    "countryCode": "TZ",
+    "name": "Samia Suluhu Hassan",
+    "handle": "@SuluhuSamia",
+    "query": "(\"Samia Suluhu Hassan\" OR @SuluhuSamia) -is:retweet",
+    "trackerId": "31839151-1250-4a9d-a452-fb392e16a57f"
+  },
+  {
+    "id": "anutin",
+    "country": "Thailand",
+    "countryCode": "TH",
+    "name": "Anutin Charnvirakul",
+    "handle": null,
+    "query": "(\"Anutin Charnvirakul\") -is:retweet"
+  },
+  {
+    "id": "starmer",
+    "country": "United Kingdom",
+    "countryCode": "GB",
+    "name": "Keir Starmer",
+    "handle": "@Keir_Starmer",
+    "query": "(\"Keir Starmer\" OR @Keir_Starmer) -is:retweet",
+    "trackerId": "2c843bf8-b65b-4d43-945f-15ade687adc9"
+  },
+  {
+    "id": "macron",
+    "country": "France",
+    "countryCode": "FR",
+    "name": "Emmanuel Macron",
+    "handle": "@EmmanuelMacron",
+    "query": "(\"Emmanuel Macron\" OR @EmmanuelMacron) -is:retweet",
+    "trackerId": "487ea469-fe53-418e-8568-ad16b7d307f6"
+  },
+  {
+    "id": "ramaphosa",
+    "country": "South Africa",
+    "countryCode": "ZA",
+    "name": "Cyril Ramaphosa",
+    "handle": "@CyrilRamaphosa",
+    "query": "(\"Cyril Ramaphosa\" OR @CyrilRamaphosa) -is:retweet",
+    "trackerId": "309d59f8-9bbb-455f-ba8b-f261d03d239e"
+  },
+  {
+    "id": "meloni",
+    "country": "Italy",
+    "countryCode": "IT",
+    "name": "Giorgia Meloni",
+    "handle": "@GiorgiaMeloni",
+    "query": "(\"Giorgia Meloni\" OR @GiorgiaMeloni) -is:retweet",
+    "trackerId": "acf6c839-3972-4380-9049-37fae2685758"
+  },
+  {
+    "id": "ruto",
+    "country": "Kenya",
+    "countryCode": "KE",
+    "name": "William Ruto",
+    "handle": "@WilliamsRuto",
+    "query": "(\"William Ruto\" OR @WilliamsRuto) -is:retweet",
+    "trackerId": "ac60720e-b143-45a3-8932-d629eea7576e"
+  },
+  {
+    "id": "minaung",
+    "country": "Myanmar",
+    "countryCode": "MM",
+    "name": "Min Aung Hlaing",
+    "handle": null,
+    "query": "(\"Min Aung Hlaing\") -is:retweet"
+  },
+  {
+    "id": "petro",
+    "country": "Colombia",
+    "countryCode": "CO",
+    "name": "Gustavo Petro",
+    "handle": "@petrogustavo",
+    "query": "(\"Gustavo Petro\" OR @petrogustavo) -is:retweet",
+    "trackerId": "bdedcbb2-0e0e-4f4d-831f-1df03eb3ffee"
+  },
+  {
+    "id": "burhan",
+    "country": "Sudan",
+    "countryCode": "SD",
+    "name": "Abdel Fattah al-Burhan",
+    "handle": "@aftaburhan",
+    "query": "(\"Abdel Fattah al-Burhan\" OR \"al-Burhan\" OR @aftaburhan) -is:retweet",
+    "trackerId": "e3d6ae56-4a17-4c69-828d-207e912a5a30"
+  },
+  {
+    "id": "museveni",
+    "country": "Uganda",
+    "countryCode": "UG",
+    "name": "Yoweri Museveni",
+    "handle": "@kagutamuseveni",
+    "query": "(\"Yoweri Museveni\" OR @kagutamuseveni) -is:retweet",
+    "trackerId": "2f3ca252-6220-4ad5-9d47-05d2bd4cd0b7"
+  },
+  {
+    "id": "sanchez",
+    "country": "Spain",
+    "countryCode": "ES",
+    "name": "Pedro Sanchez",
+    "handle": "@sanchezcastejon",
+    "query": "(\"Pedro Sanchez\" OR @sanchezcastejon) -is:retweet",
+    "trackerId": "93cbbc39-06ba-47ac-963c-776b53f3be3d"
+  }
+]
