@@ -61,7 +61,7 @@ export default function ComparisonChart() {
   useEffect(() => {
     selectedIds.forEach(id => {
       if (leaderHistories[id]) return; // already fetched
-      fetch(`/api/leaders/${id}`)
+      fetch(`/api/leaders/${id}.json`)
         .then(r => r.ok ? r.json() : null)
         .then(data => {
           if (data?.history) {

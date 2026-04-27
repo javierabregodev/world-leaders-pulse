@@ -83,7 +83,9 @@ export default function Dashboard({ onSelectLeader }) {
 
   // Compute spotlights from server data
   const spotlights = useMemo(() => {
-    const withMentions = leaders.filter(l => l.totalMentions > 0);
+    const withMentions = leaders
+      .filter(l => l.totalMentions > 0)
+      .sort((a, b) => (b.totalMentions || 0) - (a.totalMentions || 0));
     const withEngagement = leaders.filter(l => l.engagement);
 
     const mostMentioned = withMentions[0] ? { ...withMentions[0], mentions: withMentions[0].totalMentions } : null;
