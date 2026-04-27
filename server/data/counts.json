@@ -1,468 +1,437 @@
 {
-  "modi_mentions_2025": {
-    "total": 16199750,
-    "year": 2025,
-    "fetchedAt": "2026-04-16T13:30:22.503Z"
-  },
   "modi": {
-    "total": 20868050,
-    "lastUpdated": "2026-04-27T19:29:30.960Z",
-    "last7d": 399191
-  },
-  "modi_mentions_2026": {
-    "total": 4668300,
-    "year": 2026,
-    "fetchedAt": "2026-04-16T13:31:13.982Z"
-  },
-  "xi_mentions_2025": {
-    "total": 494046,
-    "year": 2025,
-    "fetchedAt": "2026-04-16T13:33:35.267Z"
+    "total": 22416356,
+    "lastUpdated": "2026-04-27T19:46:53.113Z"
   },
   "xi": {
-    "total": 638189,
-    "lastUpdated": "2026-04-27T19:29:44.465Z",
-    "last7d": 7301
-  },
-  "xi_mentions_2026": {
-    "total": 144143,
-    "year": 2026,
-    "fetchedAt": "2026-04-16T13:34:26.938Z"
-  },
-  "trump_mentions_2025": {
-    "total": 49231368,
-    "year": 2025,
-    "fetchedAt": "2026-04-16T13:37:22.167Z"
+    "total": 704446,
+    "lastUpdated": "2026-04-27T19:50:34.718Z"
   },
   "trump": {
-    "total": 62502223,
-    "lastUpdated": "2026-04-27T19:30:04.496Z",
-    "last7d": 3604114
-  },
-  "trump_mentions_2026": {
-    "total": 13270855,
-    "year": 2026,
-    "fetchedAt": "2026-04-16T13:38:13.445Z"
-  },
-  "prabowo_mentions_2025": {
-    "total": 2870573,
-    "year": 2025,
-    "fetchedAt": "2026-04-16T13:40:52.615Z"
+    "total": 304163190,
+    "lastUpdated": "2026-04-27T19:55:19.725Z"
   },
   "prabowo": {
-    "total": 3410720,
-    "lastUpdated": "2026-04-27T19:30:18.172Z",
-    "last7d": 39493
-  },
-  "prabowo_mentions_2026": {
-    "total": 540147,
-    "year": 2026,
-    "fetchedAt": "2026-04-16T13:41:44.192Z"
-  },
-  "sharif_mentions_2025": {
-    "total": 950794,
-    "year": 2025,
-    "fetchedAt": "2026-04-16T13:44:17.944Z"
+    "total": 3584313,
+    "lastUpdated": "2026-04-27T19:59:01.655Z"
   },
   "sharif": {
-    "total": 1329730,
-    "lastUpdated": "2026-04-27T19:30:31.797Z",
-    "last7d": 28129
-  },
-  "sharif_mentions_2026": {
-    "total": 378936,
-    "year": 2026,
-    "fetchedAt": "2026-04-16T13:45:09.110Z"
-  },
-  "tinubu_mentions_2025": {
-    "total": 140756,
-    "year": 2025,
-    "fetchedAt": "2026-04-16T13:47:42.897Z"
+    "total": 1436929,
+    "lastUpdated": "2026-04-27T20:02:43.692Z"
   },
   "tinubu": {
-    "total": 195407,
-    "lastUpdated": "2026-04-27T19:30:45.191Z",
-    "last7d": 163480
-  },
-  "tinubu_mentions_2026": {
-    "total": 54651,
-    "year": 2026,
-    "fetchedAt": "2026-04-16T13:48:34.159Z"
-  },
-  "lula_mentions_2025": {
-    "total": 15093071,
-    "year": 2025,
-    "fetchedAt": "2026-04-16T13:51:08.449Z"
+    "total": 6896129,
+    "lastUpdated": "2026-04-27T20:06:30.414Z"
   },
   "lula": {
-    "total": 18761322,
-    "lastUpdated": "2026-04-27T19:30:58.619Z",
-    "last7d": 263042
-  },
-  "lula_mentions_2026": {
-    "total": 3668251,
-    "year": 2026,
-    "fetchedAt": "2026-04-16T13:52:01.138Z"
-  },
-  "rahman_mentions_2025": {
-    "total": 7981,
-    "year": 2025,
-    "fetchedAt": "2026-04-16T13:54:36.958Z"
+    "total": 19769294,
+    "lastUpdated": "2026-04-27T20:10:12.015Z"
   },
   "rahman": {
-    "total": 21969,
-    "lastUpdated": "2026-04-27T19:31:12.268Z",
-    "last7d": 1136
-  },
-  "rahman_mentions_2026": {
-    "total": 13988,
-    "year": 2026,
-    "fetchedAt": "2026-04-16T13:55:28.506Z"
-  },
-  "putin_mentions_2025": {
-    "total": 631515,
-    "year": 2025,
-    "fetchedAt": "2026-04-16T13:58:02.670Z"
+    "total": 66254,
+    "lastUpdated": "2026-04-27T20:13:58.631Z"
   },
   "putin": {
-    "total": 752046,
-    "lastUpdated": "2026-04-27T19:31:25.649Z",
-    "last7d": 154219
-  },
-  "putin_mentions_2026": {
-    "total": 120531,
-    "year": 2026,
-    "fetchedAt": "2026-04-16T13:58:53.953Z"
-  },
-  "abiy_mentions_2025": {
-    "total": 56570,
-    "year": 2025,
-    "fetchedAt": "2026-04-16T14:01:27.517Z"
+    "total": 21578621,
+    "lastUpdated": "2026-04-27T20:17:45.677Z"
   },
   "abiy": {
-    "total": 73886,
-    "lastUpdated": "2026-04-27T19:31:39.127Z",
-    "last7d": 4450
-  },
-  "abiy_mentions_2026": {
-    "total": 17316,
-    "year": 2026,
-    "fetchedAt": "2026-04-16T14:02:18.659Z"
-  },
-  "sheinbaum_mentions_2025": {
-    "total": 12121583,
-    "year": 2025,
-    "fetchedAt": "2026-04-16T14:05:02.657Z"
+    "total": 340232,
+    "lastUpdated": "2026-04-27T20:21:26.769Z"
   },
   "sheinbaum": {
-    "total": 15055340,
-    "lastUpdated": "2026-04-27T19:31:52.683Z",
-    "last7d": 256877
-  },
-  "sheinbaum_mentions_2026": {
-    "total": 2933757,
-    "year": 2026,
-    "fetchedAt": "2026-04-16T14:05:53.862Z"
-  },
-  "takaichi_mentions_2025": {
-    "total": 60762,
-    "year": 2025,
-    "fetchedAt": "2026-04-16T14:08:27.342Z"
+    "total": 17012169,
+    "lastUpdated": "2026-04-27T20:25:08.296Z"
   },
   "takaichi": {
-    "total": 110521,
-    "lastUpdated": "2026-04-27T19:32:06.121Z",
-    "last7d": 72907
-  },
-  "takaichi_mentions_2026": {
-    "total": 49759,
-    "year": 2026,
-    "fetchedAt": "2026-04-16T14:09:18.703Z"
-  },
-  "sisi_mentions_2025": {
-    "total": 15359,
-    "year": 2025,
-    "fetchedAt": "2026-04-16T14:11:52.704Z"
+    "total": 1890004,
+    "lastUpdated": "2026-04-27T20:28:49.611Z"
   },
   "sisi": {
-    "total": 19343,
-    "lastUpdated": "2026-04-27T19:32:19.412Z",
-    "last7d": 9354
-  },
-  "sisi_mentions_2026": {
-    "total": 3984,
-    "year": 2026,
-    "fetchedAt": "2026-04-16T14:12:43.914Z"
-  },
-  "marcos_mentions_2025": {
-    "total": 134321,
-    "year": 2025,
-    "fetchedAt": "2026-04-16T14:15:17.872Z"
+    "total": 605101,
+    "lastUpdated": "2026-04-27T20:33:40.343Z"
   },
   "marcos": {
-    "total": 157330,
-    "lastUpdated": "2026-04-27T19:32:32.786Z",
-    "last7d": 1673
-  },
-  "marcos_mentions_2026": {
-    "total": 23009,
-    "year": 2026,
-    "fetchedAt": "2026-04-16T14:16:09.097Z"
-  },
-  "tshisekedi_mentions_2025": {
-    "total": 608205,
-    "year": 2025,
-    "fetchedAt": "2026-04-16T14:18:42.872Z"
+    "total": 164076,
+    "lastUpdated": "2026-04-27T20:37:21.397Z"
   },
   "tshisekedi": {
-    "total": 712848,
-    "lastUpdated": "2026-04-27T19:32:46.207Z",
-    "last7d": 7452
-  },
-  "tshisekedi_mentions_2026": {
-    "total": 104643,
-    "year": 2026,
-    "fetchedAt": "2026-04-16T14:19:34.250Z"
-  },
-  "tolam_mentions_2025": {
-    "total": 19009,
-    "year": 2025,
-    "fetchedAt": "2026-04-16T14:22:07.931Z"
+    "total": 806473,
+    "lastUpdated": "2026-04-27T20:41:03.354Z"
   },
   "tolam": {
-    "total": 27483,
-    "lastUpdated": "2026-04-27T19:32:59.674Z",
-    "last7d": 501
-  },
-  "tolam_mentions_2026": {
-    "total": 8474,
-    "year": 2026,
-    "fetchedAt": "2026-04-16T14:22:59.410Z"
-  },
-  "pezeshkian_mentions_2025": {
-    "total": 77549,
-    "year": 2025,
-    "fetchedAt": "2026-04-16T14:25:33.821Z"
+    "total": 28956,
+    "lastUpdated": "2026-04-27T20:44:44.183Z"
   },
   "pezeshkian": {
-    "total": 172274,
-    "lastUpdated": "2026-04-27T19:33:13.302Z",
-    "last7d": 26011
-  },
-  "pezeshkian_mentions_2026": {
-    "total": 94725,
-    "year": 2026,
-    "fetchedAt": "2026-04-16T14:26:25.627Z"
-  },
-  "erdogan_mentions_2025": {
-    "total": 18434062,
-    "year": 2025,
-    "fetchedAt": "2026-04-16T14:29:04.925Z"
+    "total": 985557,
+    "lastUpdated": "2026-04-27T20:48:25.828Z"
   },
   "erdogan": {
-    "total": 22362848,
-    "lastUpdated": "2026-04-27T19:33:26.620Z",
-    "last7d": 264944
-  },
-  "erdogan_mentions_2026": {
-    "total": 3928786,
-    "year": 2026,
-    "fetchedAt": "2026-04-16T14:29:56.229Z"
-  },
-  "merz_mentions_2025": {
-    "total": 2623605,
-    "year": 2025,
-    "fetchedAt": "2026-04-16T14:32:30.167Z"
+    "total": 24709488,
+    "lastUpdated": "2026-04-27T20:52:07.122Z"
   },
   "merz": {
-    "total": 2949568,
-    "lastUpdated": "2026-04-27T19:33:39.983Z",
-    "last7d": 63261
-  },
-  "merz_mentions_2026": {
-    "total": 325963,
-    "year": 2026,
-    "fetchedAt": "2026-04-16T14:33:21.716Z"
-  },
-  "samia_mentions_2025": {
-    "total": 170111,
-    "year": 2025,
-    "fetchedAt": "2026-04-16T14:35:55.736Z"
+    "total": 5981331,
+    "lastUpdated": "2026-04-27T20:55:48.691Z"
   },
   "samia": {
-    "total": 190081,
-    "lastUpdated": "2026-04-27T19:33:53.315Z",
-    "last7d": 3695
-  },
-  "samia_mentions_2026": {
-    "total": 19970,
-    "year": 2026,
-    "fetchedAt": "2026-04-16T14:36:47.141Z"
-  },
-  "anutin_mentions_2025": {
-    "total": 5320,
-    "year": 2025,
-    "fetchedAt": "2026-04-16T14:39:21.272Z"
+    "total": 656004,
+    "lastUpdated": "2026-04-27T20:59:30.074Z"
   },
   "anutin": {
-    "total": 7346,
-    "lastUpdated": "2026-04-27T19:34:06.609Z",
-    "last7d": 131
-  },
-  "anutin_mentions_2026": {
-    "total": 2026,
-    "year": 2026,
-    "fetchedAt": "2026-04-16T14:40:12.867Z"
-  },
-  "starmer_mentions_2025": {
-    "total": 11698123,
-    "year": 2025,
-    "fetchedAt": "2026-04-16T14:42:47.209Z"
+    "total": 7806,
+    "lastUpdated": "2026-04-27T21:03:11.360Z"
   },
   "starmer": {
-    "total": 14613925,
-    "lastUpdated": "2026-04-27T19:34:20.155Z",
-    "last7d": 319661
-  },
-  "starmer_mentions_2026": {
-    "total": 2915802,
-    "year": 2026,
-    "fetchedAt": "2026-04-16T14:43:38.760Z"
-  },
-  "macron_mentions_2025": {
-    "total": 6511228,
-    "year": 2025,
-    "fetchedAt": "2026-04-16T14:46:12.727Z"
+    "total": 22263001,
+    "lastUpdated": "2026-04-27T21:06:53.341Z"
   },
   "macron": {
-    "total": 8270014,
-    "lastUpdated": "2026-04-27T19:34:33.846Z",
-    "last7d": 195696
-  },
-  "macron_mentions_2026": {
-    "total": 1758786,
-    "year": 2026,
-    "fetchedAt": "2026-04-16T14:47:04.136Z"
-  },
-  "ramaphosa_mentions_2025": {
-    "total": 1043514,
-    "year": 2025,
-    "fetchedAt": "2026-04-16T14:49:38.767Z"
+    "total": 16270749,
+    "lastUpdated": "2026-04-27T21:10:34.492Z"
   },
   "ramaphosa": {
-    "total": 1247610,
-    "lastUpdated": "2026-04-27T19:34:47.267Z",
-    "last7d": 33039
-  },
-  "ramaphosa_mentions_2026": {
-    "total": 204096,
-    "year": 2026,
-    "fetchedAt": "2026-04-16T14:50:30.061Z"
-  },
-  "meloni_mentions_2025": {
-    "total": 240411,
-    "year": 2025,
-    "fetchedAt": "2026-04-16T14:53:03.830Z"
+    "total": 1721401,
+    "lastUpdated": "2026-04-27T21:14:15.097Z"
   },
   "meloni": {
-    "total": 316501,
-    "lastUpdated": "2026-04-27T19:35:00.525Z",
-    "last7d": 116060
-  },
-  "meloni_mentions_2026": {
-    "total": 76090,
-    "year": 2026,
-    "fetchedAt": "2026-04-16T14:53:55.176Z"
-  },
-  "ruto_mentions_2025": {
-    "total": 1175066,
-    "year": 2025,
-    "fetchedAt": "2026-04-16T14:56:29.275Z"
+    "total": 5370114,
+    "lastUpdated": "2026-04-27T21:18:28.734Z"
   },
   "ruto": {
-    "total": 1408240,
-    "lastUpdated": "2026-04-27T19:35:13.870Z",
-    "last7d": 53398
-  },
-  "ruto_mentions_2026": {
-    "total": 233174,
-    "year": 2026,
-    "fetchedAt": "2026-04-16T14:57:20.617Z"
-  },
-  "minaung_mentions_2025": {
-    "total": 16317,
-    "year": 2025,
-    "fetchedAt": "2026-04-16T14:59:54.345Z"
+    "total": 4086928,
+    "lastUpdated": "2026-04-27T21:22:09.784Z"
   },
   "minaung": {
-    "total": 19444,
-    "lastUpdated": "2026-04-27T19:35:27.248Z",
-    "last7d": 290
-  },
-  "minaung_mentions_2026": {
-    "total": 3127,
-    "year": 2026,
-    "fetchedAt": "2026-04-16T15:00:45.528Z"
-  },
-  "petro_mentions_2025": {
-    "total": 15257082,
-    "year": 2025,
-    "fetchedAt": "2026-04-16T15:03:24.420Z"
+    "total": 20051,
+    "lastUpdated": "2026-04-27T21:25:50.883Z"
   },
   "petro": {
-    "total": 18690224,
-    "lastUpdated": "2026-04-27T19:35:40.627Z",
-    "last7d": 354795
-  },
-  "petro_mentions_2026": {
-    "total": 3433142,
-    "year": 2026,
-    "fetchedAt": "2026-04-16T15:04:15.570Z"
-  },
-  "burhan_mentions_2025": {
-    "total": 8117,
-    "year": 2025,
-    "fetchedAt": "2026-04-16T15:06:49.206Z"
+    "total": 26699428,
+    "lastUpdated": "2026-04-27T21:29:32.865Z"
   },
   "burhan": {
-    "total": 10197,
-    "lastUpdated": "2026-04-27T19:35:53.969Z",
-    "last7d": 291
-  },
-  "burhan_mentions_2026": {
-    "total": 2080,
-    "year": 2026,
-    "fetchedAt": "2026-04-16T15:07:40.298Z"
-  },
-  "museveni_mentions_2025": {
-    "total": 1134759,
-    "year": 2025,
-    "fetchedAt": "2026-04-16T15:10:13.894Z"
+    "total": 29878,
+    "lastUpdated": "2026-04-27T21:33:13.870Z"
   },
   "museveni": {
-    "total": 1426713,
-    "lastUpdated": "2026-04-27T19:36:07.357Z",
-    "last7d": 18614
-  },
-  "museveni_mentions_2026": {
-    "total": 291954,
-    "year": 2026,
-    "fetchedAt": "2026-04-16T15:11:05.193Z"
-  },
-  "sanchez_mentions_2025": {
-    "total": 4544610,
-    "year": 2025,
-    "fetchedAt": "2026-04-16T15:13:39.033Z"
+    "total": 1925247,
+    "lastUpdated": "2026-04-27T21:36:55.064Z"
   },
   "sanchez": {
-    "total": 6251657,
-    "lastUpdated": "2026-04-27T19:36:20.742Z",
-    "last7d": 110423
+    "total": 6634343,
+    "lastUpdated": "2026-04-27T21:40:36.634Z"
+  },
+  "_lastGlobalUpdate": "2026-04-27T19:36:22.771Z",
+  "modi_mentions_2025": {
+    "total": 16881106,
+    "year": 2025,
+    "fetchedAt": "2026-04-27T19:45:57.980Z"
+  },
+  "modi_mentions_2026": {
+    "total": 5535250,
+    "year": 2026,
+    "fetchedAt": "2026-04-27T19:46:53.112Z"
+  },
+  "xi_mentions_2025": {
+    "total": 546023,
+    "year": 2025,
+    "fetchedAt": "2026-04-27T19:49:39.451Z"
+  },
+  "xi_mentions_2026": {
+    "total": 158423,
+    "year": 2026,
+    "fetchedAt": "2026-04-27T19:50:34.717Z"
+  },
+  "trump_mentions_2025": {
+    "total": 231565381,
+    "year": 2025,
+    "fetchedAt": "2026-04-27T19:54:08.656Z"
+  },
+  "trump_mentions_2026": {
+    "total": 72597809,
+    "year": 2026,
+    "fetchedAt": "2026-04-27T19:55:19.724Z"
+  },
+  "prabowo_mentions_2025": {
+    "total": 2966789,
+    "year": 2025,
+    "fetchedAt": "2026-04-27T19:58:06.282Z"
+  },
+  "prabowo_mentions_2026": {
+    "total": 617524,
+    "year": 2026,
+    "fetchedAt": "2026-04-27T19:59:01.654Z"
+  },
+  "sharif_mentions_2025": {
+    "total": 990937,
+    "year": 2025,
+    "fetchedAt": "2026-04-27T20:01:48.282Z"
+  },
+  "sharif_mentions_2026": {
+    "total": 445992,
+    "year": 2026,
+    "fetchedAt": "2026-04-27T20:02:43.691Z"
+  },
+  "tinubu_mentions_2025": {
+    "total": 4736715,
+    "year": 2025,
+    "fetchedAt": "2026-04-27T20:05:29.709Z"
+  },
+  "tinubu_mentions_2026": {
+    "total": 2159414,
+    "year": 2026,
+    "fetchedAt": "2026-04-27T20:06:30.414Z"
+  },
+  "lula_mentions_2025": {
+    "total": 15529304,
+    "year": 2025,
+    "fetchedAt": "2026-04-27T20:09:16.698Z"
+  },
+  "lula_mentions_2026": {
+    "total": 4239990,
+    "year": 2026,
+    "fetchedAt": "2026-04-27T20:10:12.014Z"
+  },
+  "rahman_mentions_2025": {
+    "total": 33564,
+    "year": 2025,
+    "fetchedAt": "2026-04-27T20:13:02.915Z"
+  },
+  "rahman_mentions_2026": {
+    "total": 32690,
+    "year": 2026,
+    "fetchedAt": "2026-04-27T20:13:58.630Z"
+  },
+  "putin_mentions_2025": {
+    "total": 18058066,
+    "year": 2025,
+    "fetchedAt": "2026-04-27T20:16:50.286Z"
+  },
+  "putin_mentions_2026": {
+    "total": 3520555,
+    "year": 2026,
+    "fetchedAt": "2026-04-27T20:17:45.677Z"
+  },
+  "abiy_mentions_2025": {
+    "total": 263207,
+    "year": 2025,
+    "fetchedAt": "2026-04-27T20:20:31.349Z"
+  },
+  "abiy_mentions_2026": {
+    "total": 77025,
+    "year": 2026,
+    "fetchedAt": "2026-04-27T20:21:26.768Z"
+  },
+  "sheinbaum_mentions_2025": {
+    "total": 13308201,
+    "year": 2025,
+    "fetchedAt": "2026-04-27T20:24:13.025Z"
+  },
+  "sheinbaum_mentions_2026": {
+    "total": 3703968,
+    "year": 2026,
+    "fetchedAt": "2026-04-27T20:25:08.295Z"
+  },
+  "takaichi_mentions_2025": {
+    "total": 892347,
+    "year": 2025,
+    "fetchedAt": "2026-04-27T20:27:54.318Z"
+  },
+  "takaichi_mentions_2026": {
+    "total": 997657,
+    "year": 2026,
+    "fetchedAt": "2026-04-27T20:28:49.610Z"
+  },
+  "sisi_mentions_2025": {
+    "total": 478669,
+    "year": 2025,
+    "fetchedAt": "2026-04-27T20:31:36.083Z"
+  },
+  "sisi_mentions_2026": {
+    "total": 126432,
+    "year": 2026,
+    "fetchedAt": "2026-04-27T20:33:40.342Z"
+  },
+  "marcos_mentions_2025": {
+    "total": 137611,
+    "year": 2025,
+    "fetchedAt": "2026-04-27T20:36:26.137Z"
+  },
+  "marcos_mentions_2026": {
+    "total": 26465,
+    "year": 2026,
+    "fetchedAt": "2026-04-27T20:37:21.396Z"
+  },
+  "tshisekedi_mentions_2025": {
+    "total": 671670,
+    "year": 2025,
+    "fetchedAt": "2026-04-27T20:40:07.708Z"
+  },
+  "tshisekedi_mentions_2026": {
+    "total": 134803,
+    "year": 2026,
+    "fetchedAt": "2026-04-27T20:41:03.353Z"
+  },
+  "tolam_mentions_2025": {
+    "total": 19397,
+    "year": 2025,
+    "fetchedAt": "2026-04-27T20:43:48.935Z"
+  },
+  "tolam_mentions_2026": {
+    "total": 9559,
+    "year": 2026,
+    "fetchedAt": "2026-04-27T20:44:44.182Z"
+  },
+  "pezeshkian_mentions_2025": {
+    "total": 524605,
+    "year": 2025,
+    "fetchedAt": "2026-04-27T20:47:30.546Z"
+  },
+  "pezeshkian_mentions_2026": {
+    "total": 460952,
+    "year": 2026,
+    "fetchedAt": "2026-04-27T20:48:25.827Z"
+  },
+  "erdogan_mentions_2025": {
+    "total": 19861814,
+    "year": 2025,
+    "fetchedAt": "2026-04-27T20:51:11.717Z"
+  },
+  "erdogan_mentions_2026": {
+    "total": 4847674,
+    "year": 2026,
+    "fetchedAt": "2026-04-27T20:52:07.122Z"
+  },
+  "merz_mentions_2025": {
+    "total": 5035334,
+    "year": 2025,
+    "fetchedAt": "2026-04-27T20:54:53.285Z"
+  },
+  "merz_mentions_2026": {
+    "total": 945997,
+    "year": 2026,
+    "fetchedAt": "2026-04-27T20:55:48.691Z"
+  },
+  "samia_mentions_2025": {
+    "total": 605322,
+    "year": 2025,
+    "fetchedAt": "2026-04-27T20:58:34.790Z"
+  },
+  "samia_mentions_2026": {
+    "total": 50682,
+    "year": 2026,
+    "fetchedAt": "2026-04-27T20:59:30.073Z"
+  },
+  "anutin_mentions_2025": {
+    "total": 5526,
+    "year": 2025,
+    "fetchedAt": "2026-04-27T21:02:15.944Z"
+  },
+  "anutin_mentions_2026": {
+    "total": 2280,
+    "year": 2026,
+    "fetchedAt": "2026-04-27T21:03:11.358Z"
+  },
+  "starmer_mentions_2025": {
+    "total": 16839275,
+    "year": 2025,
+    "fetchedAt": "2026-04-27T21:05:57.809Z"
+  },
+  "starmer_mentions_2026": {
+    "total": 5423726,
+    "year": 2026,
+    "fetchedAt": "2026-04-27T21:06:53.340Z"
+  },
+  "macron_mentions_2025": {
+    "total": 12726500,
+    "year": 2025,
+    "fetchedAt": "2026-04-27T21:09:38.884Z"
+  },
+  "macron_mentions_2026": {
+    "total": 3544249,
+    "year": 2026,
+    "fetchedAt": "2026-04-27T21:10:34.491Z"
+  },
+  "ramaphosa_mentions_2025": {
+    "total": 1407716,
+    "year": 2025,
+    "fetchedAt": "2026-04-27T21:13:19.770Z"
+  },
+  "ramaphosa_mentions_2026": {
+    "total": 313685,
+    "year": 2026,
+    "fetchedAt": "2026-04-27T21:14:15.096Z"
+  },
+  "meloni_mentions_2025": {
+    "total": 3823824,
+    "year": 2025,
+    "fetchedAt": "2026-04-27T21:17:33.231Z"
+  },
+  "meloni_mentions_2026": {
+    "total": 1546290,
+    "year": 2026,
+    "fetchedAt": "2026-04-27T21:18:28.733Z"
+  },
+  "ruto_mentions_2025": {
+    "total": 3301430,
+    "year": 2025,
+    "fetchedAt": "2026-04-27T21:21:14.535Z"
+  },
+  "ruto_mentions_2026": {
+    "total": 785498,
+    "year": 2026,
+    "fetchedAt": "2026-04-27T21:22:09.783Z"
+  },
+  "minaung_mentions_2025": {
+    "total": 16412,
+    "year": 2025,
+    "fetchedAt": "2026-04-27T21:24:55.617Z"
+  },
+  "minaung_mentions_2026": {
+    "total": 3639,
+    "year": 2026,
+    "fetchedAt": "2026-04-27T21:25:50.882Z"
+  },
+  "petro_mentions_2025": {
+    "total": 21242031,
+    "year": 2025,
+    "fetchedAt": "2026-04-27T21:28:37.676Z"
+  },
+  "petro_mentions_2026": {
+    "total": 5457397,
+    "year": 2026,
+    "fetchedAt": "2026-04-27T21:29:32.865Z"
+  },
+  "burhan_mentions_2025": {
+    "total": 23012,
+    "year": 2025,
+    "fetchedAt": "2026-04-27T21:32:18.605Z"
+  },
+  "burhan_mentions_2026": {
+    "total": 6866,
+    "year": 2026,
+    "fetchedAt": "2026-04-27T21:33:13.869Z"
+  },
+  "museveni_mentions_2025": {
+    "total": 1500810,
+    "year": 2025,
+    "fetchedAt": "2026-04-27T21:35:59.777Z"
+  },
+  "museveni_mentions_2026": {
+    "total": 424437,
+    "year": 2026,
+    "fetchedAt": "2026-04-27T21:36:55.063Z"
+  },
+  "sanchez_mentions_2025": {
+    "total": 4678816,
+    "year": 2025,
+    "fetchedAt": "2026-04-27T21:39:41.387Z"
   },
   "sanchez_mentions_2026": {
-    "total": 1707047,
+    "total": 1955527,
     "year": 2026,
-    "fetchedAt": "2026-04-16T15:14:30.280Z"
-  },
-  "_lastGlobalUpdate": "2026-04-27T19:36:22.771Z"
+    "fetchedAt": "2026-04-27T21:40:36.634Z"
+  }
 }
