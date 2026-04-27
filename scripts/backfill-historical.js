@@ -138,21 +138,66 @@ async function backfillMentionsForLeader(leader, history, counts) {
   console.log(`    ${total.toLocaleString()} total, ${points.length} buckets → ${Object.keys(dailySums).length} dates`);
 }
 
+// Tweet Binder caps each report at ~35K tweets. If we hit that, chain a
+// follow-up report ending at the oldest tweet we already have, walking
+// backwards in time until we exhaust the SINCE..UNTIL window.
+const REPORT_CAP_THRESHOLD = 34000;
+
 async function backfillTweetsForLeader(leader, engagement) {
   if (!leader.handle) { console.log(`  [TWEETS] skip (no handle)`); return; }
   const username = leader.handle.replace('@', '');
-  const untilClause = UNTIL ? ` until:${UNTIL}` : '';
-  const query = `from:${username} since:${SINCE}${untilClause}`;
-  console.log(`  [TWEETS] ${query}`);
 
-  const created = await apiPost('/reports/twitter/historical', { query: { raw: query } });
-  const rid = created?.resourceId || created?.data?.resourceId;
-  if (!rid) throw new Error('no resourceId');
-  await waitForReport(rid, 240); // tweet reports take longer to generate
-  const tweets = await getAllPages(rid);
-  console.log(`    ${tweets.length} tweets`);
+  const allTweets = [];
+  const seenIds = new Set();
+  let untilOverride = UNTIL; // null on first pass
+  let step = 0;
 
-  const processed = processTweets(tweets, username, leader.id);
+  while (true) {
+    step++;
+    const untilClause = untilOverride ? ` until:${untilOverride}` : '';
+    const query = `from:${username} since:${SINCE}${untilClause}`;
+    console.log(`  [TWEETS step ${step}] ${query}`);
+
+    const created = await apiPost('/reports/twitter/historical', { query: { raw: query } });
+    const rid = created?.resourceId || created?.data?.resourceId;
+    if (!rid) throw new Error('no resourceId');
+    await waitForReport(rid, 240);
+    const batch = await getAllPages(rid);
+    console.log(`    fetched ${batch.length} tweets`);
+
+    let added = 0;
+    for (const t of batch) {
+      if (!t._id || seenIds.has(t._id)) continue;
+      seenIds.add(t._id);
+      allTweets.push(t);
+      added++;
+    }
+    console.log(`    +${added} new (cumulative ${allTweets.length})`);
+
+    // Stop conditions: under cap, no progress, or window exhausted.
+    if (batch.length < REPORT_CAP_THRESHOLD) { console.log(`    done — under cap`); break; }
+    if (added === 0) { console.log(`    done — chain saturated (no new tweets)`); break; }
+
+    // Set next until = day AFTER the oldest tweet's UTC date, so the next
+    // report covers everything strictly older while still re-grabbing the
+    // morning of the boundary day (any duplicates are removed via seenIds).
+    const oldestTs = batch.reduce((min, t) => {
+      const ts = t.createdAt || (t.counts && (t.counts.min || t.counts.max));
+      return ts ? Math.min(min, ts) : min;
+    }, Infinity);
+    if (!isFinite(oldestTs)) { console.log(`    done — no createdAt to chain`); break; }
+    const d = new Date(oldestTs * 1000);
+    d.setUTCDate(d.getUTCDate() + 1);
+    untilOverride = d.toISOString().slice(0, 10);
+    if (untilOverride <= SINCE) { console.log(`    done — reached SINCE boundary`); break; }
+    if (step >= 30) { console.log(`    done — safety cap (30 chain steps)`); break; }
+
+    await sleep(3000);
+  }
+
+  if (allTweets.length === 0) { console.log(`    no tweets`); return; }
+
+  const processed = processTweets(allTweets, username, leader.id);
   if (!processed) return;
 
   // Drop legacy per-year buckets so the merged view reads only from _alltime
