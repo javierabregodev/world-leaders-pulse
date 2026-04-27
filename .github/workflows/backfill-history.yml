@@ -1,0 +1,80 @@
+name: Backfill Historical Mentions
+
+# Manual trigger: rebuilds mention history for the given year range using
+# the current leaders.json queries. Used when query semantics change or to
+# repair previously-deflated data. Tweet engagement reports are skipped by
+# default to keep API spend low (toggle the "tweets" input to include them).
+
+on:
+  workflow_dispatch:
+    inputs:
+      start_year:
+        description: 'Start year (inclusive)'
+        required: true
+        default: '2025'
+      end_year:
+        description: 'End year (inclusive)'
+        required: true
+        default: '2026'
+      reset:
+        description: 'Drop cached month keys & history dates in range, then re-fetch'
+        required: true
+        type: boolean
+        default: true
+      tweets:
+        description: 'Also re-fetch tweet engagement reports (slow, expensive)'
+        required: true
+        type: boolean
+        default: false
+
+concurrency:
+  group: data-update
+  cancel-in-progress: false
+
+jobs:
+  backfill:
+    runs-on: ubuntu-latest
+    timeout-minutes: 350  # well under GHA's 6h hard cap; mention-only typically ~2h
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - run: npm ci
+
+      - name: Run backfill
+        env:
+          TWEETBINDER_API_KEY: ${{ secrets.TWEETBINDER_API_KEY }}
+          TWEETBINDER_API_URL: ${{ secrets.TWEETBINDER_API_URL }}
+        run: |
+          FLAGS=""
+          if [ "${{ inputs.reset }}" = "true" ]; then FLAGS="$FLAGS --reset"; fi
+          if [ "${{ inputs.tweets }}" != "true" ]; then FLAGS="$FLAGS --mentions-only"; fi
+          echo "Running: node server/backfill.js ${{ inputs.start_year }} ${{ inputs.end_year }}$FLAGS"
+          node server/backfill.js ${{ inputs.start_year }} ${{ inputs.end_year }} $FLAGS
+
+      - name: Rebuild static JSON
+        run: npm run build-static
+
+      - name: Commit updated data
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add server/data public/api
+          if ! git diff --cached --quiet; then
+            git commit -m "data: backfill ${{ inputs.start_year }}-${{ inputs.end_year }} mentions (reset=${{ inputs.reset }})"
+            for i in 1 2 3; do
+              git pull --rebase origin main && git push && break
+              echo "Push attempt $i failed, retrying..."
+              sleep $((i * 5))
+            done
+          else
+            echo "No changes to commit"
+          fi

@@ -63,6 +63,26 @@ async function getAllTweets(resourceId) {
   return all;
 }
 
+// For COUNT reports, /transcript/tweets returns the full list of hourly
+// (or sub-hourly) bucket points, each shaped { _id, counts: { min, max, count } }.
+// We use this rather than /stats.timeline because the latter is sampled
+// (~30 buckets regardless of date range), which deflates daily counts ~4x.
+async function getAllCountPoints(resourceId) {
+  const all = [];
+  let page = 0;
+  const LIMIT = 500;
+  while (true) {
+    const res = await apiGet(`/reports/${resourceId}/transcript/tweets?offset=${page}&limit=${LIMIT}`);
+    const points = res?.data || [];
+    if (points.length === 0) break;
+    all.push(...points);
+    if (!res?.pagination?.nextResults || points.length < LIMIT) break;
+    page++;
+    await sleep(300);
+  }
+  return all;
+}
+
 // Generate month ranges for a year
 function getMonthRanges(year) {
   const now = new Date();
@@ -97,22 +117,26 @@ async function backfillMentionsMonthly(leader, year) {
       const resourceId = created?.resourceId || created?.data?.resourceId;
       if (!resourceId) throw new Error('No resourceId');
       await waitForReport(resourceId);
+
+      // Total comes from /stats; the per-day breakdown from /transcript/tweets
       const stats = await apiGet(`/reports/${resourceId}/stats`);
       const total = stats?.stats?.general?.total || 0;
-      const timeline = stats?.stats?.timeline || [];
+      const points = await getAllCountPoints(resourceId);
 
       yearTotal += total;
-      // Aggregate timeline buckets by date — the API may return sub-daily
-      // points and we want one count per day.
+      // Aggregate hourly buckets by date — each point has nested counts.{min,max,count}
       const dailySums = {};
-      for (const p of timeline) {
-        const date = new Date((p.min || p.max) * 1000).toISOString().slice(0, 10);
-        dailySums[date] = (dailySums[date] || 0) + (p.count || 0);
+      for (const p of points) {
+        const c = p.counts || p;
+        const ts = (c.min || c.max);
+        if (!ts) continue;
+        const date = new Date(ts * 1000).toISOString().slice(0, 10);
+        dailySums[date] = (dailySums[date] || 0) + (c.count || 0);
       }
       for (const [date, count] of Object.entries(dailySums)) {
         dailyPoints.push({ date, count });
       }
-      process.stdout.write(`    ${monthLabel}: ${total.toLocaleString()} (${timeline.length}d) `);
+      process.stdout.write(`    ${monthLabel}: ${total.toLocaleString()} (${points.length}b → ${Object.keys(dailySums).length}d) `);
       await sleep(2000);
     } catch (err) {
       process.stdout.write(`    ${monthLabel}: ERROR ${err.message.slice(0, 50)} `);
@@ -196,9 +220,12 @@ function rebuildMergedEngagement(engagement, leaderId) {
 }
 
 async function main() {
-  const args = process.argv.slice(2);
+  const args = process.argv.slice(2).filter(a => !a.startsWith('--'));
+  const flags = process.argv.slice(2).filter(a => a.startsWith('--'));
   const startYear = parseInt(args[0]) || 2025;
   const endYear = parseInt(args[1]) || 2026;
+  const reset = flags.includes('--reset');
+  const mentionsOnly = flags.includes('--mentions-only');
   const years = [];
   for (let y = startYear; y <= endYear; y++) years.push(y);
 
@@ -208,14 +235,36 @@ async function main() {
   }, 0);
 
   console.log(`\n========================================`);
-  console.log(`BACKFILL: ${leaders.length} leaders × ${years.join(', ')}`);
+  console.log(`BACKFILL: ${leaders.length} leaders × ${years.join(', ')}${reset ? ' (RESET)' : ''}${mentionsOnly ? ' (mentions only)' : ''}`);
   console.log(`Mention counts: ~${leaders.length * monthsTotal} calls (monthly)`);
-  console.log(`Tweet reports: ~${leaders.filter(l => l.handle).length * years.length} calls`);
+  if (!mentionsOnly) console.log(`Tweet reports: ~${leaders.filter(l => l.handle).length * years.length} calls`);
   console.log(`========================================\n`);
 
   const counts = loadJSON(COUNTS_FILE);
   const history = loadJSON(HISTORY_FILE);
   const engagement = loadJSON(ENGAGEMENT_FILE);
+
+  // --reset: clear cached SKIP keys for the years being processed so we
+  // re-fetch everything (used when query semantics or aggregation changed).
+  if (reset) {
+    for (const leader of leaders) {
+      for (const y of years) {
+        delete counts[`${leader.id}_mentions_${y}`];
+        if (!mentionsOnly) delete engagement[`${leader.id}_${y}`];
+      }
+      // Also drop history points within the year range so re-fetched
+      // values fully replace any older deflated data.
+      if (history[leader.id]) {
+        const minDate = `${startYear}-01-01`;
+        const maxDate = `${endYear}-12-31`;
+        history[leader.id] = history[leader.id].filter(h => h.date < minDate || h.date > maxDate);
+      }
+    }
+    saveJSON(COUNTS_FILE, counts);
+    saveJSON(HISTORY_FILE, history);
+    if (!mentionsOnly) saveJSON(ENGAGEMENT_FILE, engagement);
+    console.log(`Reset cleared cached keys for ${leaders.length} leaders × ${years.length} years\n`);
+  }
 
   for (const leader of leaders) {
     console.log(`\n=== ${leader.name} (${leader.country}) ===`);
@@ -253,7 +302,7 @@ async function main() {
       }
 
       // --- Tweets ---
-      if (leader.handle) {
+      if (leader.handle && !mentionsOnly) {
         const engKey = `${leader.id}_${year}`;
         if (engagement[engKey]) {
           console.log(`  SKIP tweets ${year}: ${engagement[engKey].tweetCount} tweets`);
