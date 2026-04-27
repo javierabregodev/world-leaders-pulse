@@ -1,0 +1,77 @@
+name: Backfill Historical Since 2020
+
+# One-shot historical recovery: a single Tweet Binder report per leader
+# covering the full date range, instead of monthly chunks. Designed for
+# pulling 2020-now in one go (mentions, tweets, or both).
+
+on:
+  workflow_dispatch:
+    inputs:
+      since:
+        description: 'Start date (YYYY-MM-DD)'
+        required: true
+        default: '2020-01-01'
+      until:
+        description: 'End date (optional, YYYY-MM-DD)'
+        required: false
+        default: ''
+      mode:
+        description: 'What to fetch'
+        required: true
+        type: choice
+        options:
+          - mentions
+          - tweets
+          - both
+        default: both
+
+concurrency:
+  group: data-update
+  cancel-in-progress: false
+
+jobs:
+  backfill:
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - run: npm ci
+
+      - name: Run historical backfill
+        env:
+          TWEETBINDER_API_KEY: ${{ secrets.TWEETBINDER_API_KEY }}
+          TWEETBINDER_API_URL: ${{ secrets.TWEETBINDER_API_URL }}
+        run: |
+          ARGS="--since ${{ inputs.since }} --mode ${{ inputs.mode }}"
+          if [ -n "${{ inputs.until }}" ]; then ARGS="$ARGS --until ${{ inputs.until }}"; fi
+          echo "Running: node scripts/backfill-historical.js $ARGS"
+          node scripts/backfill-historical.js $ARGS
+
+      - name: Rebuild static JSON
+        run: npm run build-static
+
+      - name: Commit updated data
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add server/data public/api
+          if ! git diff --cached --quiet; then
+            git commit -m "data: historical backfill since ${{ inputs.since }} (mode=${{ inputs.mode }})"
+            for i in 1 2 3; do
+              git pull --rebase origin main && git push && break
+              echo "Push attempt $i failed, retrying..."
+              sleep $((i * 5))
+            done
+          else
+            echo "No changes to commit"
+          fi
