@@ -135,13 +135,28 @@ async function main() {
       const timeline = stats?.stats?.timeline || [];
       counts[leader.id] = { ...counts[leader.id], last7d: total, lastUpdated: new Date().toISOString() };
 
-      // Merge daily data into history
-      if (!history[leader.id]) history[leader.id] = [];
+      // Tweet Binder's 7-day timeline returns sub-daily buckets (multiple
+      // points per date). Aggregate by date before merging, otherwise
+      // history[].count gets clobbered with a fraction of the real day total.
+      const dailySums = {};
       for (const p of timeline) {
         const date = new Date((p.min || p.max) * 1000).toISOString().slice(0, 10);
+        dailySums[date] = (dailySums[date] || 0) + (p.count || 0);
+      }
+
+      // The oldest date in the 7-day window only has partial trailing data
+      // (the window cuts mid-day), so don't overwrite it with a deflated count.
+      const sortedDates = Object.keys(dailySums).sort();
+      const partialOldestDate = sortedDates.length > 1 ? sortedDates[0] : null;
+      const todayUTC = new Date().toISOString().slice(0, 10);
+
+      if (!history[leader.id]) history[leader.id] = [];
+      for (const [date, count] of Object.entries(dailySums)) {
+        // Skip the partial-window boundary day unless it's also today
+        if (date === partialOldestDate && date !== todayUTC) continue;
         const existing = history[leader.id].find(h => h.date === date);
-        if (existing) existing.count = p.count;
-        else history[leader.id].push({ date, count: p.count });
+        if (existing) existing.count = count;
+        else history[leader.id].push({ date, count });
       }
       history[leader.id].sort((a, b) => a.date.localeCompare(b.date));
       saveJSON(COUNTS_FILE, counts);

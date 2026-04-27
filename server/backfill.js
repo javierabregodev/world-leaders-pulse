@@ -102,11 +102,15 @@ async function backfillMentionsMonthly(leader, year) {
       const timeline = stats?.stats?.timeline || [];
 
       yearTotal += total;
+      // Aggregate timeline buckets by date — the API may return sub-daily
+      // points and we want one count per day.
+      const dailySums = {};
       for (const p of timeline) {
-        dailyPoints.push({
-          date: new Date((p.min || p.max) * 1000).toISOString().slice(0, 10),
-          count: p.count,
-        });
+        const date = new Date((p.min || p.max) * 1000).toISOString().slice(0, 10);
+        dailySums[date] = (dailySums[date] || 0) + (p.count || 0);
+      }
+      for (const [date, count] of Object.entries(dailySums)) {
+        dailyPoints.push({ date, count });
       }
       process.stdout.write(`    ${monthLabel}: ${total.toLocaleString()} (${timeline.length}d) `);
       await sleep(2000);
