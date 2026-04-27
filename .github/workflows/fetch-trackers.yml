@@ -43,7 +43,11 @@ jobs:
           git add server/data public/api
           if ! git diff --cached --quiet; then
             git commit -m "data: daily tracker snapshots"
-            git push
+            for i in 1 2 3; do
+              git pull --rebase origin main && git push && break
+              echo "Push attempt $i failed, retrying..."
+              sleep $((i * 5))
+            done
           else
             echo "No changes to commit"
           fi

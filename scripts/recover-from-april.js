@@ -57,6 +57,25 @@ async function waitForReport(resourceId) {
   throw new Error('timeout');
 }
 
+// /reports/{id}/stats only returns a sampled/truncated timeline (gives ~4x
+// less than reality for multi-day queries). The raw hourly buckets live on
+// /reports/{id}/transcript/counts and are paginated.
+async function getAllCountPoints(resourceId) {
+  const all = [];
+  let page = 0;
+  const LIMIT = 500;
+  while (true) {
+    const res = await apiGet(`/reports/${resourceId}/transcript/tweets?offset=${page}&limit=${LIMIT}`);
+    const points = res?.data || [];
+    if (points.length === 0) break;
+    all.push(...points);
+    if (!res?.pagination?.nextResults || points.length < LIMIT) break;
+    page++;
+    await sleep(300);
+  }
+  return all;
+}
+
 async function main() {
   console.log(`\n=== Recovery: re-fetching mention history since ${SINCE} ===\n`);
   const history = loadJSON(HISTORY_FILE);
@@ -72,15 +91,20 @@ async function main() {
       const rid = created?.resourceId || created?.data?.resourceId;
       if (!rid) throw new Error('no resourceId');
       await waitForReport(rid);
+
+      // Get the report total for logging, but use full count points for the timeline
       const stats = await apiGet(`/reports/${rid}/stats`);
       const total = stats?.stats?.general?.total || 0;
-      const timeline = stats?.stats?.timeline || [];
+      const points = await getAllCountPoints(rid);
 
-      // Aggregate timeline points by date
+      // Aggregate hourly buckets by date — each point has nested counts.{min,max,count}
       const dailySums = {};
-      for (const p of timeline) {
-        const date = new Date((p.min || p.max) * 1000).toISOString().slice(0, 10);
-        dailySums[date] = (dailySums[date] || 0) + (p.count || 0);
+      for (const p of points) {
+        const c = p.counts || p;
+        const ts = (c.min || c.max);
+        if (!ts) continue;
+        const date = new Date(ts * 1000).toISOString().slice(0, 10);
+        dailySums[date] = (dailySums[date] || 0) + (c.count || 0);
       }
 
       if (!history[leader.id]) history[leader.id] = [];
@@ -106,7 +130,8 @@ async function main() {
 
       saveJSON(HISTORY_FILE, history);
       saveJSON(COUNTS_FILE, counts);
-      console.log(`  ${total.toLocaleString()} total since ${SINCE}, ${Object.keys(dailySums).length} dates, ${written} written`);
+      const dailyTotal = Object.values(dailySums).reduce((s, v) => s + v, 0);
+      console.log(`  ${total.toLocaleString()} reported / ${dailyTotal.toLocaleString()} from ${points.length} buckets, ${Object.keys(dailySums).length} dates, ${written} written`);
       await sleep(2000);
     } catch (err) {
       console.error(`  ERROR: ${err.message}`);

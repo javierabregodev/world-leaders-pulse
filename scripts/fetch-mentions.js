@@ -64,6 +64,25 @@ async function getAllTweets(resourceId) {
   return all;
 }
 
+// /reports/{id}/stats.timeline returns a sampled summary that severely
+// underreports daily totals (saw ~4x deflation). The raw hourly buckets
+// live on /transcript/counts and are paginated.
+async function getAllCountPoints(resourceId) {
+  const all = [];
+  let page = 0;
+  const LIMIT = 500;
+  while (true) {
+    const res = await apiGet(`/reports/${resourceId}/transcript/tweets?offset=${page}&limit=${LIMIT}`);
+    const points = res?.data || [];
+    if (points.length === 0) break;
+    all.push(...points);
+    if (!res?.pagination?.nextResults || points.length < LIMIT) break;
+    page++;
+    await sleep(300);
+  }
+  return all;
+}
+
 function reprocessFromTweets(tweets, leadersList) {
   let totalLikes = 0, totalRTs = 0, totalImpressions = 0, totalReplies = 0;
   let originals = 0, rtsSent = 0, repliesSent = 0;
@@ -132,16 +151,20 @@ async function main() {
       await waitForReport(rid);
       const stats = await apiGet(`/reports/${rid}/stats`);
       const total = stats?.stats?.general?.total || 0;
-      const timeline = stats?.stats?.timeline || [];
       counts[leader.id] = { ...counts[leader.id], last7d: total, lastUpdated: new Date().toISOString() };
 
-      // Tweet Binder's 7-day timeline returns sub-daily buckets (multiple
-      // points per date). Aggregate by date before merging, otherwise
-      // history[].count gets clobbered with a fraction of the real day total.
+      // Pull the full hourly bucket timeline from /transcript/counts.
+      // /stats.timeline is sampled/truncated and severely underreports.
+      const points = await getAllCountPoints(rid);
+
+      // Aggregate hourly buckets by date — each point has nested counts.{min,max,count}
       const dailySums = {};
-      for (const p of timeline) {
-        const date = new Date((p.min || p.max) * 1000).toISOString().slice(0, 10);
-        dailySums[date] = (dailySums[date] || 0) + (p.count || 0);
+      for (const p of points) {
+        const c = p.counts || p;
+        const ts = (c.min || c.max);
+        if (!ts) continue;
+        const date = new Date(ts * 1000).toISOString().slice(0, 10);
+        dailySums[date] = (dailySums[date] || 0) + (c.count || 0);
       }
 
       // The oldest date in the 7-day window only has partial trailing data
@@ -161,7 +184,7 @@ async function main() {
       history[leader.id].sort((a, b) => a.date.localeCompare(b.date));
       saveJSON(COUNTS_FILE, counts);
       saveJSON(HISTORY_FILE, history);
-      console.log(`  [7-day count] ${total.toLocaleString()} mentions, ${timeline.length} daily points`);
+      console.log(`  [7-day count] ${total.toLocaleString()} mentions, ${points.length} hourly buckets → ${Object.keys(dailySums).length} dates`);
       await sleep(2000);
     } catch (err) {
       console.error(`  [7-day count] ERROR: ${err.message}`);

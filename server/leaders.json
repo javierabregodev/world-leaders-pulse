@@ -22,7 +22,7 @@
     "countryCode": "US",
     "name": "Donald Trump",
     "handle": "@realDonaldTrump",
-    "query": "(\"Donald Trump\" OR @realDonaldTrump) -is:retweet",
+    "query": "(Trump OR @realDonaldTrump) -is:retweet",
     "trackerId": "9531f7a3-fd88-486c-972c-5e4a2183264f"
   },
   {
@@ -31,7 +31,7 @@
     "countryCode": "ID",
     "name": "Prabowo Subianto",
     "handle": "@prabowo",
-    "query": "(\"Prabowo Subianto\" OR @prabowo) -is:retweet",
+    "query": "(Subianto OR @prabowo) -is:retweet",
     "trackerId": "a4ef1715-12d0-4dc1-99ef-1a75d7dc5c25"
   },
   {
@@ -49,7 +49,7 @@
     "countryCode": "NG",
     "name": "Bola Tinubu",
     "handle": "@officialABAT",
-    "query": "(\"Bola Tinubu\" OR @officialABAT) -is:retweet",
+    "query": "(Tinubu OR @officialABAT) -is:retweet",
     "trackerId": "99ff7506-16db-4ac6-80c9-f28877990463"
   },
   {
@@ -58,7 +58,7 @@
     "countryCode": "BR",
     "name": "Luiz Inacio Lula da Silva",
     "handle": "@LulaOficial",
-    "query": "(\"Lula\" OR @LulaOficial) -is:retweet",
+    "query": "(Lula OR @LulaOficial) -is:retweet",
     "trackerId": "15468a1c-8dd8-4d51-b42f-85d8bef22265"
   },
   {
@@ -76,7 +76,7 @@
     "countryCode": "RU",
     "name": "Vladimir Putin",
     "handle": null,
-    "query": "(\"Vladimir Putin\") -is:retweet"
+    "query": "(Putin) -is:retweet"
   },
   {
     "id": "abiy",
@@ -93,7 +93,7 @@
     "countryCode": "MX",
     "name": "Claudia Sheinbaum",
     "handle": "@Claudiashein",
-    "query": "(\"Claudia Sheinbaum\" OR @Claudiashein) -is:retweet",
+    "query": "(Sheinbaum OR @Claudiashein) -is:retweet",
     "trackerId": "2f704e91-c43c-4c52-ac6b-feab6ebaa362"
   },
   {
@@ -102,7 +102,7 @@
     "countryCode": "JP",
     "name": "Sanae Takaichi",
     "handle": "@takaichi_sanae",
-    "query": "(\"Sanae Takaichi\" OR @takaichi_sanae) -is:retweet",
+    "query": "(Takaichi OR @takaichi_sanae) -is:retweet",
     "trackerId": "0fdbd92e-180a-49b8-bfed-a75eeb687063"
   },
   {
@@ -111,7 +111,7 @@
     "countryCode": "EG",
     "name": "Abdel Fattah el-Sisi",
     "handle": "@AlsisiOfficial",
-    "query": "(\"Abdel Fattah el-Sisi\" OR \"el-Sisi\" OR @AlsisiOfficial) -is:retweet",
+    "query": "(el-Sisi OR @AlsisiOfficial) -is:retweet",
     "trackerId": "a324b28f-3d2e-461f-bc14-0d438bf54f25"
   },
   {
@@ -129,7 +129,7 @@
     "countryCode": "CD",
     "name": "Felix Tshisekedi",
     "handle": "@FelixUdps",
-    "query": "(\"Felix Tshisekedi\" OR \"Tshisekedi\" OR @FelixUdps) -is:retweet",
+    "query": "(Tshisekedi OR @FelixUdps) -is:retweet",
     "trackerId": "7d081eb0-ee20-40a8-b0f3-61e4de8c13b3"
   },
   {
@@ -146,7 +146,7 @@
     "countryCode": "IR",
     "name": "Masoud Pezeshkian",
     "handle": "@drpezeshkian",
-    "query": "(\"Masoud Pezeshkian\" OR \"Pezeshkian\" OR @drpezeshkian) -is:retweet",
+    "query": "(Pezeshkian OR @drpezeshkian) -is:retweet",
     "trackerId": "66d0dadb-52df-4590-8043-4552128bdc6f"
   },
   {
@@ -155,7 +155,7 @@
     "countryCode": "TR",
     "name": "Recep Tayyip Erdogan",
     "handle": "@RTErdogan",
-    "query": "(\"Erdogan\" OR @RTErdogan) -is:retweet",
+    "query": "(Erdogan OR @RTErdogan) -is:retweet",
     "trackerId": "63449d4f-35bd-49f1-9c7e-b4fed93618b4"
   },
   {
@@ -164,7 +164,7 @@
     "countryCode": "DE",
     "name": "Friedrich Merz",
     "handle": "@_FriedrichMerz",
-    "query": "(\"Friedrich Merz\" OR @_FriedrichMerz) -is:retweet",
+    "query": "(Merz OR @_FriedrichMerz) -is:retweet",
     "trackerId": "2f9676bf-fdda-4f92-abc8-a9fe6af0aedd"
   },
   {
@@ -173,7 +173,7 @@
     "countryCode": "TZ",
     "name": "Samia Suluhu Hassan",
     "handle": "@SuluhuSamia",
-    "query": "(\"Samia Suluhu Hassan\" OR @SuluhuSamia) -is:retweet",
+    "query": "(\"Samia Suluhu\" OR @SuluhuSamia) -is:retweet",
     "trackerId": "31839151-1250-4a9d-a452-fb392e16a57f"
   },
   {
@@ -182,7 +182,7 @@
     "countryCode": "TH",
     "name": "Anutin Charnvirakul",
     "handle": null,
-    "query": "(\"Anutin Charnvirakul\") -is:retweet"
+    "query": "(Charnvirakul) -is:retweet"
   },
   {
     "id": "starmer",
@@ -190,7 +190,7 @@
     "countryCode": "GB",
     "name": "Keir Starmer",
     "handle": "@Keir_Starmer",
-    "query": "(\"Keir Starmer\" OR @Keir_Starmer) -is:retweet",
+    "query": "(Starmer OR @Keir_Starmer) -is:retweet",
     "trackerId": "2c843bf8-b65b-4d43-945f-15ade687adc9"
   },
   {
@@ -199,7 +199,7 @@
     "countryCode": "FR",
     "name": "Emmanuel Macron",
     "handle": "@EmmanuelMacron",
-    "query": "(\"Emmanuel Macron\" OR @EmmanuelMacron) -is:retweet",
+    "query": "(Macron OR @EmmanuelMacron) -is:retweet",
     "trackerId": "487ea469-fe53-418e-8568-ad16b7d307f6"
   },
   {
@@ -208,7 +208,7 @@
     "countryCode": "ZA",
     "name": "Cyril Ramaphosa",
     "handle": "@CyrilRamaphosa",
-    "query": "(\"Cyril Ramaphosa\" OR @CyrilRamaphosa) -is:retweet",
+    "query": "(Ramaphosa OR @CyrilRamaphosa) -is:retweet",
     "trackerId": "309d59f8-9bbb-455f-ba8b-f261d03d239e"
   },
   {
@@ -217,7 +217,7 @@
     "countryCode": "IT",
     "name": "Giorgia Meloni",
     "handle": "@GiorgiaMeloni",
-    "query": "(\"Giorgia Meloni\" OR @GiorgiaMeloni) -is:retweet",
+    "query": "(Meloni OR @GiorgiaMeloni) -is:retweet",
     "trackerId": "acf6c839-3972-4380-9049-37fae2685758"
   },
   {
@@ -226,7 +226,7 @@
     "countryCode": "KE",
     "name": "William Ruto",
     "handle": "@WilliamsRuto",
-    "query": "(\"William Ruto\" OR @WilliamsRuto) -is:retweet",
+    "query": "(Ruto OR @WilliamsRuto) -is:retweet",
     "trackerId": "ac60720e-b143-45a3-8932-d629eea7576e"
   },
   {
@@ -243,7 +243,7 @@
     "countryCode": "CO",
     "name": "Gustavo Petro",
     "handle": "@petrogustavo",
-    "query": "(\"Gustavo Petro\" OR @petrogustavo) -is:retweet",
+    "query": "(Petro OR @petrogustavo) -is:retweet",
     "trackerId": "bdedcbb2-0e0e-4f4d-831f-1df03eb3ffee"
   },
   {
@@ -252,7 +252,7 @@
     "countryCode": "SD",
     "name": "Abdel Fattah al-Burhan",
     "handle": "@aftaburhan",
-    "query": "(\"Abdel Fattah al-Burhan\" OR \"al-Burhan\" OR @aftaburhan) -is:retweet",
+    "query": "(al-Burhan OR @aftaburhan) -is:retweet",
     "trackerId": "e3d6ae56-4a17-4c69-828d-207e912a5a30"
   },
   {
@@ -261,7 +261,7 @@
     "countryCode": "UG",
     "name": "Yoweri Museveni",
     "handle": "@kagutamuseveni",
-    "query": "(\"Yoweri Museveni\" OR @kagutamuseveni) -is:retweet",
+    "query": "(Museveni OR @kagutamuseveni) -is:retweet",
     "trackerId": "2f3ca252-6220-4ad5-9d47-05d2bd4cd0b7"
   },
   {
