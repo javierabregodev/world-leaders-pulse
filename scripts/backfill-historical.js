@@ -266,6 +266,9 @@ async function backfillTweetsForLeader(leader, engagement) {
 function shouldRun(phase) {
   if (MODE === 'all') return true;
   if (MODE === 'both') return phase === 'mentions' || phase === 'tweets';
+  // 'tweets-rts': skip the (typically already-done) mentions phase, just
+  // refresh tweet engagement + RTs received in one workflow run.
+  if (MODE === 'tweets-rts') return phase === 'tweets' || phase === 'rts';
   return MODE === phase;
 }
 

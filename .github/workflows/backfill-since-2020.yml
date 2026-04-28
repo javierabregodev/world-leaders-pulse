@@ -23,6 +23,7 @@ on:
           - mentions
           - tweets
           - rts
+          - tweets-rts
           - both
           - all
         default: both
