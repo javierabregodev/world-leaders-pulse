@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import {
   AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
 } from 'recharts';
-import { LEADER_COLORS } from '../mockData';
+import { LEADER_COLORS, getLeaderColor } from '../mockData';
 import MOCK_LEADERS from '../mockData';
 import { InlineDatePicker } from './DatePicker';
 
@@ -29,7 +29,9 @@ function formatCompact(n) {
 }
 
 function getColorForLeader(id, index) {
-  return LEADER_COLORS[id] || ALL_COLORS[index % ALL_COLORS.length];
+  // LEADER_COLORS still wins (curated picks); fall back to the deterministic
+  // hash so new leaders never collide with each other in the comparison view.
+  return LEADER_COLORS[id] || getLeaderColor(id) || ALL_COLORS[index % ALL_COLORS.length];
 }
 
 // Aggregate daily history into monthly buckets

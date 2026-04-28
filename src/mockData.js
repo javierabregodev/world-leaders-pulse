@@ -349,6 +349,9 @@ export function getLeaderById(id) {
   };
 }
 
+// Hand-picked colors for high-profile leaders. For everyone else, getLeaderColor
+// derives a stable HSL color from the leader id so newly added leaders pick up
+// a visually distinct chart color automatically (no manual assignment needed).
 export const LEADER_COLORS = {
   trump: '#ef4444',   // red
   modi: '#f59e0b',    // amber (was orange, too close to red)
@@ -356,6 +359,20 @@ export const LEADER_COLORS = {
   erdogan: '#10b981', // emerald
   putin: '#8b5cf6',   // violet
 };
+
+function hashString(str) {
+  let h = 5381;
+  for (let i = 0; i < str.length; i++) h = ((h << 5) + h + str.charCodeAt(i)) | 0;
+  return h >>> 0;
+}
+
+export function getLeaderColor(id) {
+  if (LEADER_COLORS[id]) return LEADER_COLORS[id];
+  const hue = hashString(id || '') % 360;
+  // Mid-saturation, mid-lightness — good contrast against white background
+  // and against each other when multiple leaders share a chart.
+  return `hsl(${hue}, 65%, 52%)`;
+}
 
 export const PERIOD_LABELS = {
   today: 'Today', yesterday: 'Yesterday', '7d': 'Last 7 Days', '30d': 'Last 30 Days', '365d': 'Last 365 Days',

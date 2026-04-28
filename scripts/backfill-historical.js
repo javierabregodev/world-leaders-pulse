@@ -41,7 +41,8 @@ function getArg(name, def) {
 }
 const SINCE = getArg('--since', '2020-01-01');
 const UNTIL = getArg('--until', null);
-const MODE = getArg('--mode', 'both'); // mentions | tweets | rts | all | both
+const MODE = getArg('--mode', 'both'); // mentions | tweets | rts | tweets-rts | both | all
+const ONLY_LEADER = getArg('--leader-id', null); // process a single leader (e.g. on onboarding)
 
 const API_URL = process.env.TWEETBINDER_API_URL;
 const API_KEY = process.env.TWEETBINDER_API_KEY;
@@ -273,16 +274,25 @@ function shouldRun(phase) {
 }
 
 async function main() {
-  console.log(`\n=== Historical backfill: since=${SINCE}${UNTIL ? ' until=' + UNTIL : ''}, mode=${MODE} ===\n`);
+  const targetLeaders = ONLY_LEADER
+    ? leaders.filter(l => l.id === ONLY_LEADER)
+    : leaders;
+
+  if (ONLY_LEADER && targetLeaders.length === 0) {
+    console.error(`No leader found with id="${ONLY_LEADER}". Available ids: ${leaders.map(l => l.id).join(', ')}`);
+    process.exit(1);
+  }
+
+  console.log(`\n=== Historical backfill: since=${SINCE}${UNTIL ? ' until=' + UNTIL : ''}, mode=${MODE}${ONLY_LEADER ? `, leader=${ONLY_LEADER}` : ''} ===\n`);
   const history = loadJSON(HISTORY_FILE);
   const counts = loadJSON(COUNTS_FILE);
   const engagement = loadJSON(ENGAGEMENT_FILE);
   const rtsReceived = loadJSON(RTS_RECEIVED_FILE);
 
   let i = 0;
-  for (const leader of leaders) {
+  for (const leader of targetLeaders) {
     i++;
-    console.log(`\n[${i}/${leaders.length}] ${leader.name} (${leader.country})`);
+    console.log(`\n[${i}/${targetLeaders.length}] ${leader.name} (${leader.country})`);
 
     if (shouldRun('mentions')) {
       try {

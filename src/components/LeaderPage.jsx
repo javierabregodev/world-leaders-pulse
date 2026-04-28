@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { getLeaderById, LEADER_COLORS, PERIOD_LABELS } from '../mockData';
+import { getLeaderById, getLeaderColor, PERIOD_LABELS } from '../mockData';
 import {
   AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
 } from 'recharts';
@@ -423,7 +423,7 @@ export default function LeaderPage({ leaderId, onBack, onSelectLeader }) {
   }
 
   const pic = TWITTER_PIC(leader.handle);
-  const color = LEADER_COLORS[leader.id] || '#6366f1';
+  const color = getLeaderColor(leader.id);
   const eng = leader.engagement;
   const periodLabel = typeof period === 'string'
     ? (PERIOD_LABELS[period] || period)
