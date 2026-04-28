@@ -579,10 +579,10 @@ export default function LeaderPage({ leaderId, onBack, onSelectLeader }) {
               <>
                 <div className="grid grid-cols-3 sm:grid-cols-6 gap-2 mb-3">
                   <EngStat label="Tweets" value={eng.tweetsPosted} icon="📝" rank={ranks.tweetsPosted} />
-                  <EngStat label="Likes" value={formatCompact(eng.totalLikes)} icon="❤️" rank={ranks.likes} />
-                  <EngStat label="Retweets" value={formatCompact(eng.totalRTs)} icon="🔁" rank={ranks.rts} />
+                  <EngStat label="Likes received" value={formatCompact(eng.totalLikes)} icon="❤️" rank={ranks.likes} />
+                  <EngStat label="RTs received" value={formatCompact(eng.totalRTs)} icon="🔁" rank={ranks.rts} />
                   <EngStat label="Impressions" value={formatCompact(eng.totalImpressions)} icon="👁" rank={ranks.impressions} />
-                  <EngStat label="Replies" value={formatCompact(eng.totalReplies)} icon="💬" rank={ranks.replies} />
+                  <EngStat label="Replies received" value={formatCompact(eng.totalReplies)} icon="💬" rank={ranks.replies} />
                   <EngStat label="Eng. Rate" value={eng.engagementRate + '%'} icon="📊" highlight rank={ranks.engRate} />
                 </div>
 
