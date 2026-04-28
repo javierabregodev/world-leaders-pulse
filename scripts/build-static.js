@@ -90,6 +90,7 @@ function main() {
   const history = readJSON(path.join(DATA_DIR, 'history.json'));
   const engagement = readJSON(path.join(DATA_DIR, 'engagement.json'));
   const trackers = readJSON(path.join(DATA_DIR, 'trackers.json'));
+  const rtsReceived = readJSON(path.join(DATA_DIR, 'rts-received.json'));
 
   // 1) INDEX: per-preset precomputed summaries
   const presets = ['today', 'yesterday', '7d', '30d', '365d', 'all'];
@@ -137,6 +138,7 @@ function main() {
         snapshots: tracker.snapshots ?? [],
         fetchedAt: tracker.fetchedAt,
       } : null,
+      rtsReceivedHistory: rtsReceived[l.id] ?? [],
     };
     writeJSON(path.join(OUT_LEADERS, l.id + '.json'), detail);
   }

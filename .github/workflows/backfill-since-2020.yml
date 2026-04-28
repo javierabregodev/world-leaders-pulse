@@ -22,7 +22,9 @@ on:
         options:
           - mentions
           - tweets
+          - rts
           - both
+          - all
         default: both
 
 concurrency:

@@ -30,6 +30,7 @@ const DATA_DIR = path.join(ROOT, 'server', 'data');
 const HISTORY_FILE = path.join(DATA_DIR, 'history.json');
 const COUNTS_FILE = path.join(DATA_DIR, 'counts.json');
 const ENGAGEMENT_FILE = path.join(DATA_DIR, 'engagement.json');
+const RTS_RECEIVED_FILE = path.join(DATA_DIR, 'rts-received.json');
 const LEADERS_FILE = path.join(ROOT, 'server', 'leaders.json');
 
 // Args
@@ -40,7 +41,7 @@ function getArg(name, def) {
 }
 const SINCE = getArg('--since', '2020-01-01');
 const UNTIL = getArg('--until', null);
-const MODE = getArg('--mode', 'both'); // mentions | tweets | both
+const MODE = getArg('--mode', 'both'); // mentions | tweets | rts | all | both
 
 const API_URL = process.env.TWEETBINDER_API_URL;
 const API_KEY = process.env.TWEETBINDER_API_KEY;
@@ -143,6 +144,45 @@ async function backfillMentionsForLeader(leader, history, counts) {
 // backwards in time until we exhaust the SINCE..UNTIL window.
 const REPORT_CAP_THRESHOLD = 34000;
 
+// Retweets received: count of retweets that target ANY of this leader's
+// tweets, by the day the RT happened (not the day the tweet was posted).
+// Lets us answer "how much was Macron RT'd today?" even if the original
+// tweet is from 2020. Uses Tweet Binder's `retweets_of:` query operator
+// against the historical count endpoint.
+async function backfillRtsReceivedForLeader(leader, rtsReceived) {
+  if (!leader.handle) { console.log(`  [RTS-RCV] skip (no handle)`); return; }
+  const username = leader.handle.replace('@', '');
+  const untilClause = UNTIL ? ` until:${UNTIL}` : '';
+  const query = `(retweets_of:${username}) since:${SINCE}${untilClause}`;
+  console.log(`  [RTS-RCV] ${query}`);
+
+  const created = await apiPost('/reports/twitter-count/historical', { query: { raw: query } });
+  const rid = created?.resourceId || created?.data?.resourceId;
+  if (!rid) throw new Error('no resourceId');
+  await waitForReport(rid);
+
+  const stats = await apiGet(`/reports/${rid}/stats`);
+  const total = stats?.stats?.general?.total || 0;
+  const points = await getAllPages(rid);
+
+  const dailySums = {};
+  for (const p of points) {
+    const c = p.counts || p;
+    const ts = (c.min || c.max);
+    if (!ts) continue;
+    const date = new Date(ts * 1000).toISOString().slice(0, 10);
+    dailySums[date] = (dailySums[date] || 0) + (c.count || 0);
+  }
+
+  const series = Object.entries(dailySums)
+    .filter(([d]) => d >= SINCE && (!UNTIL || d < UNTIL))
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([date, count]) => ({ date, count }));
+
+  rtsReceived[leader.id] = series;
+  console.log(`    ${total.toLocaleString()} total RTs received, ${points.length} buckets → ${series.length} dates`);
+}
+
 async function backfillTweetsForLeader(leader, engagement) {
   if (!leader.handle) { console.log(`  [TWEETS] skip (no handle)`); return; }
   const username = leader.handle.replace('@', '');
@@ -223,18 +263,25 @@ async function backfillTweetsForLeader(leader, engagement) {
   };
 }
 
+function shouldRun(phase) {
+  if (MODE === 'all') return true;
+  if (MODE === 'both') return phase === 'mentions' || phase === 'tweets';
+  return MODE === phase;
+}
+
 async function main() {
   console.log(`\n=== Historical backfill: since=${SINCE}${UNTIL ? ' until=' + UNTIL : ''}, mode=${MODE} ===\n`);
   const history = loadJSON(HISTORY_FILE);
   const counts = loadJSON(COUNTS_FILE);
   const engagement = loadJSON(ENGAGEMENT_FILE);
+  const rtsReceived = loadJSON(RTS_RECEIVED_FILE);
 
   let i = 0;
   for (const leader of leaders) {
     i++;
     console.log(`\n[${i}/${leaders.length}] ${leader.name} (${leader.country})`);
 
-    if (MODE === 'mentions' || MODE === 'both') {
+    if (shouldRun('mentions')) {
       try {
         await backfillMentionsForLeader(leader, history, counts);
         saveJSON(HISTORY_FILE, history);
@@ -245,7 +292,17 @@ async function main() {
       }
     }
 
-    if (MODE === 'tweets' || MODE === 'both') {
+    if (shouldRun('rts')) {
+      try {
+        await backfillRtsReceivedForLeader(leader, rtsReceived);
+        saveJSON(RTS_RECEIVED_FILE, rtsReceived);
+        await sleep(2000);
+      } catch (err) {
+        console.error(`    RTS-RCV ERROR: ${err.message}`);
+      }
+    }
+
+    if (shouldRun('tweets')) {
       try {
         await backfillTweetsForLeader(leader, engagement);
         saveJSON(ENGAGEMENT_FILE, engagement);

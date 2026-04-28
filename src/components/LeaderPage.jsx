@@ -57,6 +57,17 @@ function enumerateDates(startISO, endISO) {
   return out;
 }
 
+// Only `followers` and `lists` are interpolated — those genuinely don't
+// change daily and we have no better signal between monthly snapshots.
+// `tweets` and `mentionsReceived` are computed from real data sources
+// elsewhere (per-tweet timestamps, mentions history). `retweetsReceived`
+// has its own dedicated `retweets_of:` daily count series. `following`
+// barely moves; we just hold the latest snapshot value.
+const INTERP_FIELDS = ['followers', 'lists'];
+// Other tracker fields we want to preserve as point-in-time anchor values
+// (without interpolation) so monthly snapshots still surface in the chart.
+const PASSTHROUGH_FIELDS = ['tweets', 'mentionsReceived', 'retweetsReceived', 'following'];
+
 function interpolateTrackerToDaily(tracker, history) {
   if (!tracker?.snapshots?.length) return tracker;
   const snaps = [...tracker.snapshots].sort((a, b) => (a.date || '').localeCompare(b.date || ''));
@@ -67,7 +78,6 @@ function interpolateTrackerToDaily(tracker, history) {
     if (h.date) mentionsByDate[h.date] = h.count || 0;
   }
 
-  const FIELDS = ['followers', 'tweets', 'mentionsReceived', 'retweetsReceived', 'lists'];
   const daily = [];
 
   for (let i = 0; i < snaps.length - 1; i++) {
@@ -75,31 +85,31 @@ function interpolateTrackerToDaily(tracker, history) {
     const s2 = snaps[i + 1];
     if (!s1.date || !s2.date) continue;
 
-    // Anchor day = exact value of s1
     daily.push({ ...s1, interpolated: false });
 
-    const inner = enumerateDates(s1.date, s2.date).slice(1); // skip s1, exclusive of s2
+    const inner = enumerateDates(s1.date, s2.date).slice(1); // exclusive of s2
     if (inner.length === 0) continue;
 
     const mentionWeights = inner.map(d => Math.max(0, mentionsByDate[d] || 0));
     const totalMentions = mentionWeights.reduce((s, v) => s + v, 0);
-    const useMentionWeighting = totalMentions > 0;
-    const weights = useMentionWeighting
+    const weights = totalMentions > 0
       ? mentionWeights.map(m => m / totalMentions)
       : inner.map(() => 1 / inner.length);
 
     const deltas = {};
-    for (const f of FIELDS) deltas[f] = (s2[f] ?? 0) - (s1[f] ?? 0);
+    for (const f of INTERP_FIELDS) deltas[f] = (s2[f] ?? 0) - (s1[f] ?? 0);
 
-    const cum = Object.fromEntries(FIELDS.map(f => [f, 0]));
+    const cum = Object.fromEntries(INTERP_FIELDS.map(f => [f, 0]));
     inner.forEach((d, j) => {
-      for (const f of FIELDS) cum[f] += deltas[f] * weights[j];
-      const point = { date: d, following: s1.following, interpolated: true };
-      for (const f of FIELDS) point[f] = Math.round((s1[f] ?? 0) + cum[f]);
+      for (const f of INTERP_FIELDS) cum[f] += deltas[f] * weights[j];
+      const point = { date: d, interpolated: true };
+      for (const f of INTERP_FIELDS) point[f] = Math.round((s1[f] ?? 0) + cum[f]);
+      // Pass-through fields hold the previous anchor value until the next
+      // snapshot (no interpolation guesswork).
+      for (const f of PASSTHROUGH_FIELDS) point[f] = s1[f];
       daily.push(point);
     });
   }
-  // Final anchor
   daily.push({ ...snaps[snaps.length - 1], interpolated: false });
 
   return { ...tracker, snapshots: daily };
@@ -237,15 +247,19 @@ const CHART_VIEWS = [
   { key: 'yearly', label: 'Yearly' },
 ];
 
-// Available metrics for the over-time chart. 'mentions' comes from the
-// mention-counts history. Engagement metrics aggregate the leader's own
-// tweets. Follower metrics read the (now daily-interpolated) tracker
-// snapshots — these are point-in-time, so they always render as daily.
+// Available metrics for the over-time chart.
+// - 'mentions': real daily count of mentions of the leader (history)
+// - 'followers': tracker.snapshots.followers (interpolated daily)
+// - 'tweetsPosted': real daily count from the leader's own tweet timestamps
+// - 'rtsReceived': dedicated `retweets_of:` daily counts (new pipeline)
+// - 'likes/rts/impressions/replies': aggregated from leader.tweets per day
 const CHART_METRICS = [
   { key: 'mentions', label: 'Mentions', source: 'history', color: '#6366f1' },
+  { key: 'tweetsPosted', label: 'Tweets posted', source: 'tweetsCount', color: '#0ea5e9' },
   { key: 'followers', label: 'Followers', source: 'tracker', trackerField: 'followers', color: '#a855f7' },
+  { key: 'rtsReceived', label: 'RTs received', source: 'rtsReceivedHistory', color: '#f59e0b' },
   { key: 'likes', label: 'Likes', source: 'tweets', tweetField: 'likes', color: '#ec4899' },
-  { key: 'rts', label: 'Retweets', source: 'tweets', tweetField: 'rts', color: '#3b82f6' },
+  { key: 'rts', label: 'Retweets sent', source: 'tweets', tweetField: 'rts', color: '#3b82f6' },
   { key: 'impressions', label: 'Impressions', source: 'tweets', tweetField: 'impressions', color: '#06b6d4' },
   { key: 'replies', label: 'Replies', source: 'tweets', tweetField: 'replies', color: '#14b8a6' },
 ];
@@ -256,6 +270,18 @@ function tweetsToDailySeries(tweets, field) {
     if (!t.date) continue;
     const d = new Date(t.date * 1000).toISOString().slice(0, 10);
     byDate[d] = (byDate[d] || 0) + (t[field] || 0);
+  }
+  return Object.entries(byDate)
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([date, count]) => ({ date, count }));
+}
+
+function tweetsCountByDay(tweets) {
+  const byDate = {};
+  for (const t of tweets || []) {
+    if (!t.date) continue;
+    const d = new Date(t.date * 1000).toISOString().slice(0, 10);
+    byDate[d] = (byDate[d] || 0) + 1;
   }
   return Object.entries(byDate)
     .sort(([a], [b]) => a.localeCompare(b))
@@ -343,6 +369,7 @@ export default function LeaderPage({ leaderId, onBack, onSelectLeader }) {
     history: serverData.timeline
       ? timelineToDaily(serverData.timeline)
       : serverData.history ?? [],
+    rtsReceivedHistory: serverData.rtsReceivedHistory ?? [],
   } : (mockLeader || { id: leaderId, name: '', country: '', countryCode: '', handle: null });
 
   // Pull the right preset out of index.json for ranking. Custom month/year
@@ -360,10 +387,19 @@ export default function LeaderPage({ leaderId, onBack, onSelectLeader }) {
     sourceSeries = history.map(h => ({ date: h.date, count: h.count }));
   } else if (activeMetric.source === 'tracker') {
     sourceSeries = trackerToDailySeries(leader.tracker?.snapshots, activeMetric.trackerField);
-    // Tracker is point-in-time, scope to the selected period directly so
+    // Tracker is point-in-time — scope to the selected period directly so
     // the chart matches the date filter even though it skips aggregation.
     const { since, until } = periodToDates(period);
     sourceSeries = filterByPeriod(sourceSeries, since, until);
+  } else if (activeMetric.source === 'tweetsCount') {
+    sourceSeries = tweetsCountByDay(leader.tweets);
+  } else if (activeMetric.source === 'rtsReceivedHistory') {
+    // Daily counts of retweets to this leader's tweets, fetched separately
+    // via `retweets_of:handle` historical count. Empty until the dedicated
+    // backfill runs.
+    sourceSeries = (leader.rtsReceivedHistory || [])
+      .map(h => ({ date: h.date, count: h.count }))
+      .sort((a, b) => a.date.localeCompare(b.date));
   } else {
     sourceSeries = tweetsToDailySeries(leader.tweets, activeMetric.tweetField);
   }
@@ -575,9 +611,13 @@ export default function LeaderPage({ leaderId, onBack, onSelectLeader }) {
                 <p className="text-[11px] text-gray-400 mt-0.5">
                   {activeMetric.source === 'tweets'
                     ? `Aggregated from ${leader.name.split(' ')[0]}'s own tweets`
-                    : activeMetric.source === 'tracker'
-                      ? 'Daily follower count, interpolated from monthly snapshots and weighted by mention volume'
-                      : 'Mentions across X/Twitter'}
+                    : activeMetric.source === 'tweetsCount'
+                      ? `Daily count of tweets posted by ${leader.name.split(' ')[0]}`
+                      : activeMetric.source === 'tracker'
+                        ? 'Daily follower count, interpolated from monthly snapshots and weighted by mention volume'
+                        : activeMetric.source === 'rtsReceivedHistory'
+                          ? `Retweets others did to any of ${leader.name.split(' ')[0]}'s tweets, by day`
+                          : 'Mentions across X/Twitter'}
                 </p>
               </div>
               {/* View toggle doesn't apply to cumulative tracker series */}
