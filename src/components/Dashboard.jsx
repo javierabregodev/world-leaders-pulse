@@ -130,9 +130,7 @@ export default function Dashboard({ onSelectLeader }) {
               <h1 className="text-base font-bold text-gray-900 leading-tight">World Leaders Pulse</h1>
             </div>
             <div className="flex items-center gap-3">
-              <div className="hidden sm:flex items-center gap-2 text-[11px] text-gray-500">
-                <span>Last update: {timeInfo.timeStr}</span>
-              </div>
+              <FreshnessIndicator meta={indexData?._meta} />
               <span className="live-badge flex items-center gap-1.5 text-[11px] text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-full font-semibold">
                 <span className="relative flex h-2 w-2">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
@@ -191,6 +189,128 @@ export default function Dashboard({ onSelectLeader }) {
           <RankingList leaders={tableLeaders} onSelect={onSelectLeader} />
         </div>
       </main>
+    </div>
+  );
+}
+
+// ----------------------------------------------------------------
+// Data freshness indicator with cadence tooltip
+// ----------------------------------------------------------------
+
+// Cron schedule mirrors .github/workflows/fetch-mentions.yml + fetch-trackers.yml.
+// Mentions + tweets + RTs received: every 12h at 00:00 and 12:00 UTC.
+// Tracker snapshots: daily at 03:00 UTC.
+const MENTIONS_CRON_HOURS_UTC = [0, 12];
+const TRACKERS_CRON_HOURS_UTC = [3];
+
+function nextCronAt(hoursUTC) {
+  const now = new Date();
+  const today = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+  for (const h of [...hoursUTC].sort((a, b) => a - b)) {
+    const candidate = new Date(today.getTime() + h * 3600 * 1000);
+    if (candidate > now) return candidate;
+  }
+  // All today's slots passed — next slot is the earliest tomorrow.
+  return new Date(today.getTime() + 24 * 3600 * 1000 + Math.min(...hoursUTC) * 3600 * 1000);
+}
+
+function formatRelative(date) {
+  if (!date) return '—';
+  const diff = (Date.now() - date.getTime()) / 1000;
+  if (diff < 60) return 'just now';
+  if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+  if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+  return `${Math.floor(diff / 86400)}d ago`;
+}
+
+function formatUntil(date) {
+  if (!date) return '—';
+  const diff = (date.getTime() - Date.now()) / 1000;
+  if (diff < 60) return 'in <1 min';
+  if (diff < 3600) return `in ${Math.floor(diff / 60)} min`;
+  const h = Math.floor(diff / 3600);
+  const m = Math.floor((diff % 3600) / 60);
+  return m > 0 ? `in ${h}h ${m}m` : `in ${h}h`;
+}
+
+function formatAbsolute(iso) {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  return d.toLocaleString(undefined, {
+    month: 'short', day: 'numeric',
+    hour: '2-digit', minute: '2-digit',
+    timeZoneName: 'short',
+  });
+}
+
+function FreshnessIndicator({ meta }) {
+  const [open, setOpen] = useState(false);
+  const lastMentions = meta?.lastMentionsUpdate ? new Date(meta.lastMentionsUpdate) : null;
+  const lastTrackers = meta?.lastTrackersUpdate ? new Date(meta.lastTrackersUpdate) : null;
+  const nextMentions = nextCronAt(MENTIONS_CRON_HOURS_UTC);
+  const nextTrackers = nextCronAt(TRACKERS_CRON_HOURS_UTC);
+
+  return (
+    <div className="relative hidden sm:flex">
+      <button
+        type="button"
+        onMouseEnter={() => setOpen(true)}
+        onMouseLeave={() => setOpen(false)}
+        onClick={() => setOpen(o => !o)}
+        className="flex items-center gap-1.5 text-[11px] text-gray-500 hover:text-gray-900 transition-colors"
+      >
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <circle cx="12" cy="12" r="10" />
+          <polyline points="12 6 12 12 16 14" />
+        </svg>
+        <span>Last update: {formatRelative(lastMentions)}</span>
+      </button>
+
+      {open && (
+        <div className="absolute top-full right-0 mt-1.5 w-72 bg-white rounded-xl border border-gray-200 shadow-xl p-3 z-30 text-left">
+          <div className="text-[11px] font-semibold text-gray-900 mb-2">Data freshness</div>
+
+          <div className="space-y-2">
+            <FreshnessRow
+              icon="💬"
+              title="Mentions, tweets, RTs received"
+              cadence="Every 12h · 00:00 + 12:00 UTC"
+              lastIso={meta?.lastMentionsUpdate}
+              next={nextMentions}
+            />
+            <FreshnessRow
+              icon="👥"
+              title="Followers + account snapshots"
+              cadence="Daily · 03:00 UTC"
+              lastIso={meta?.lastTrackersUpdate}
+              next={nextTrackers}
+            />
+          </div>
+
+          <div className="mt-2.5 pt-2 border-t border-gray-100 text-[10px] text-gray-400 leading-snug">
+            Crons run on GitHub Actions. Manual backfills can refresh the
+            historical archive at any time.
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function FreshnessRow({ icon, title, cadence, lastIso, next }) {
+  return (
+    <div className="flex gap-2.5">
+      <span className="text-sm leading-none mt-0.5">{icon}</span>
+      <div className="flex-1 min-w-0">
+        <div className="text-[11px] font-semibold text-gray-700">{title}</div>
+        <div className="text-[10px] text-gray-400">{cadence}</div>
+        <div className="text-[10px] text-gray-500 mt-0.5">
+          Last: <span className="font-medium text-gray-700">{formatAbsolute(lastIso)}</span>
+        </div>
+        <div className="text-[10px] text-gray-500">
+          Next: <span className="font-medium text-emerald-600">{formatUntil(next)}</span>
+        </div>
+      </div>
     </div>
   );
 }

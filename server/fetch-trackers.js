@@ -65,8 +65,9 @@ async function main() {
     }
   }
 
+  result._lastGlobalUpdate = new Date().toISOString();
   fs.writeFileSync(OUTPUT, JSON.stringify(result, null, 2));
-  console.log(`\nSaved ${Object.keys(result).length} leaders' tracker data`);
+  console.log(`\nSaved ${Object.keys(result).length - 1} leaders' tracker data`);
 }
 
 main().catch(console.error);

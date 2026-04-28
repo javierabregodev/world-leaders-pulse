@@ -94,7 +94,13 @@ function main() {
 
   // 1) INDEX: per-preset precomputed summaries
   const presets = ['today', 'yesterday', '7d', '30d', '365d', 'all'];
-  const index = {};
+  const index = {
+    _meta: {
+      lastMentionsUpdate: counts._lastGlobalUpdate || null,
+      lastTrackersUpdate: trackers._lastGlobalUpdate || null,
+      buildAt: new Date().toISOString(),
+    },
+  };
   for (const period of presets) {
     const { since, until } = periodToDates(period);
     index[period] = leaders.map(l => {

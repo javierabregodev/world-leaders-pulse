@@ -17,6 +17,7 @@ const LEADERS_FILE = path.join(ROOT, 'server', 'leaders.json');
 const COUNTS_FILE = path.join(DATA_DIR, 'counts.json');
 const HISTORY_FILE = path.join(DATA_DIR, 'history.json');
 const ENGAGEMENT_FILE = path.join(DATA_DIR, 'engagement.json');
+const RTS_RECEIVED_FILE = path.join(DATA_DIR, 'rts-received.json');
 
 const API_URL = process.env.TWEETBINDER_API_URL;
 const API_KEY = process.env.TWEETBINDER_API_KEY;
@@ -136,6 +137,7 @@ async function main() {
   const counts = loadJSON(COUNTS_FILE);
   const history = loadJSON(HISTORY_FILE);
   const engagement = loadJSON(ENGAGEMENT_FILE);
+  const rtsReceived = loadJSON(RTS_RECEIVED_FILE);
   const currentYear = new Date().getFullYear();
   const sevenDaysAgoTs = (Date.now() / 1000) - (7 * 86400);
 
@@ -219,6 +221,48 @@ async function main() {
       await sleep(3000);
     } catch (err) {
       console.error(`  [7-day report] ERROR: ${err.message}`);
+    }
+
+    // 3) 7-day retweets-received count: how many RTs to ANY of the leader's
+    //    tweets happened in the last week, by day. The tweet itself can be
+    //    from any year — it's the RT timestamp that matters here.
+    if (!leader.handle) continue;
+    try {
+      const username = leader.handle.replace('@', '');
+      const query = `(retweets_of:${username})`;
+      const created = await apiPost('/reports/twitter-count/7-day', { query: { raw: query } });
+      const rid = created?.resourceId || created?.data?.resourceId;
+      if (!rid) throw new Error('no resourceId');
+      await waitForReport(rid);
+      const points = await getAllCountPoints(rid);
+
+      const dailySums = {};
+      for (const p of points) {
+        const c = p.counts || p;
+        const ts = (c.min || c.max);
+        if (!ts) continue;
+        const date = new Date(ts * 1000).toISOString().slice(0, 10);
+        dailySums[date] = (dailySums[date] || 0) + (c.count || 0);
+      }
+      // Same partial-window guard as mentions.
+      const sortedDates = Object.keys(dailySums).sort();
+      const partialOldestDate = sortedDates.length > 1 ? sortedDates[0] : null;
+      const todayUTC = new Date().toISOString().slice(0, 10);
+
+      if (!rtsReceived[leader.id]) rtsReceived[leader.id] = [];
+      for (const [date, count] of Object.entries(dailySums)) {
+        if (date === partialOldestDate && date !== todayUTC) continue;
+        const existing = rtsReceived[leader.id].find(h => h.date === date);
+        if (existing) existing.count = count;
+        else rtsReceived[leader.id].push({ date, count });
+      }
+      rtsReceived[leader.id].sort((a, b) => a.date.localeCompare(b.date));
+      saveJSON(RTS_RECEIVED_FILE, rtsReceived);
+      const lastWeekTotal = Object.values(dailySums).reduce((s, v) => s + v, 0);
+      console.log(`  [7-day RTs-rcv] ${lastWeekTotal.toLocaleString()} RTs received, ${points.length} buckets → ${Object.keys(dailySums).length} dates`);
+      await sleep(2000);
+    } catch (err) {
+      console.error(`  [7-day RTs-rcv] ERROR: ${err.message}`);
     }
   }
 
