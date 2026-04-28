@@ -138,24 +138,15 @@ function reprocessFromTweets(tweets, leadersList) {
   };
 }
 
-function rebuildMerged(engagement, leaderId, leadersList) {
-  const yearKeys = Object.keys(engagement).filter(k => k.startsWith(leaderId + '_'));
-  if (yearKeys.length === 0) return;
-  const allTweets = [];
-  for (const yk of yearKeys) { if (engagement[yk]?.tweets) allTweets.push(...engagement[yk].tweets); }
-  // _alltime + _<year> buckets typically overlap (alltime spans the same
-  // years individual buckets cover), so dedupe before re-aggregating.
-  const deduped = dedupeTweets(allTweets);
-  const rebuilt = reprocessFromTweets(deduped, leadersList);
-  engagement[leaderId] = { ...rebuilt, lastUpdated: new Date().toISOString(), tweetCount: deduped.length };
-}
+// rebuildMerged removed: we no longer keep _alltime or _<year> mirror
+// buckets, so there's nothing to merge. engagement[leaderId] is the
+// single canonical bucket.
 
 async function main() {
   const counts = loadJSON(COUNTS_FILE);
   const history = loadJSON(HISTORY_FILE);
   const engagement = loadJSON(ENGAGEMENT_FILE);
   const rtsReceived = loadJSON(RTS_RECEIVED_FILE);
-  const currentYear = new Date().getFullYear();
   const sevenDaysAgoTs = (Date.now() / 1000) - (7 * 86400);
 
   for (const leader of leaders) {
@@ -223,20 +214,21 @@ async function main() {
       const processed = processTweets(rawTweets, username, leader.id);
       if (!processed) continue;
 
-      // Replace last 7 days in current year bucket
-      const yearKey = `${leader.id}_${currentYear}`;
-      const existing = engagement[yearKey] || {};
+      // Single canonical bucket per leader (engagement[leaderId]). Year-
+      // suffix buckets and _alltime mirrors are gone — they were doubling
+      // the file size and pushed engagement.json past GitHub's 100MB hard
+      // limit during the global tweets-rts backfill.
+      const existing = engagement[leader.id] || {};
       const olderTweets = (existing.tweets || []).filter(t => (t.date || 0) < sevenDaysAgoTs);
-      // Dedupe by id — fresh (processed.tweets) wins over older snapshots
-      // so the engagement counters always reflect the latest API read.
       const newTweets = dedupeTweets([...olderTweets, ...(processed.tweets || [])]);
       const reproc = reprocessFromTweets(newTweets, leaders);
-      engagement[yearKey] = { ...reproc, year: currentYear, lastUpdated: new Date().toISOString(), tweetCount: newTweets.length };
-
-      // Rebuild merged key
-      rebuildMerged(engagement, leader.id, leaders);
+      engagement[leader.id] = {
+        ...reproc,
+        lastUpdated: new Date().toISOString(),
+        tweetCount: newTweets.length,
+      };
       saveJSON(ENGAGEMENT_FILE, engagement);
-      console.log(`  [7-day report] ${newTweets.length} tweets in ${currentYear} bucket, merged: ${engagement[leader.id].tweetCount}`);
+      console.log(`  [7-day report] merged ${newTweets.length} tweets`);
       await sleep(3000);
     } catch (err) {
       console.error(`  [7-day report] ERROR: ${err.message}`);

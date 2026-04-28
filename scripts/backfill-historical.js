@@ -241,24 +241,21 @@ async function backfillTweetsForLeader(leader, engagement) {
   const processed = processTweets(allTweets, username, leader.id);
   if (!processed) return;
 
-  // Drop legacy per-year buckets so the merged view reads only from _alltime
+  // Single canonical bucket per leader (engagement[leaderId]). Drop the
+  // legacy per-year and _alltime mirrors that previously coexisted with
+  // the merged view — keeping both blew engagement.json past GitHub's
+  // 100MB push limit during a full re-fetch.
   for (const k of Object.keys(engagement)) {
-    if (k.startsWith(`${leader.id}_`) && k !== `${leader.id}_alltime`) delete engagement[k];
+    if (k.startsWith(`${leader.id}_`)) delete engagement[k];
   }
-  engagement[`${leader.id}_alltime`] = {
-    ...processed,
-    since: SINCE,
-    until: UNTIL,
-    lastUpdated: new Date().toISOString(),
-    tweetCount: processed.tweets.length,
-  };
-  // Mirror to leader.id (the merged-view key the frontend reads)
   engagement[leader.id] = {
     engagement: processed.engagement,
     topRetweeted: processed.topRetweeted,
     topMentioned: processed.topMentioned,
     topHashtags: processed.topHashtags,
     tweets: processed.tweets,
+    since: SINCE,
+    until: UNTIL,
     lastUpdated: new Date().toISOString(),
     tweetCount: processed.tweets.length,
   };
