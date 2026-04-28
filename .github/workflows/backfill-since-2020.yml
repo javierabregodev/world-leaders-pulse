@@ -33,7 +33,10 @@ on:
         default: ''
 
 concurrency:
-  group: data-update
+  # Single-leader runs (onboarding a new leader, repairing one) get their own
+  # concurrency lane keyed by leader id so they don't queue behind the global
+  # backfill. Global runs share the data-update group with the crons.
+  group: ${{ inputs.leader_id != '' && format('data-leader-{0}', inputs.leader_id) || 'data-update' }}
   cancel-in-progress: false
 
 jobs:

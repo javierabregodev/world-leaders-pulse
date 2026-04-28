@@ -272,5 +272,14 @@
     "handle": "@sanchezcastejon",
     "query": "(\"Pedro Sanchez\" OR @sanchezcastejon) -is:retweet",
     "trackerId": "93cbbc39-06ba-47ac-963c-776b53f3be3d"
+  },
+  {
+    "id": "jmilei",
+    "country": "Argentina",
+    "countryCode": "AR",
+    "name": "Javier Milei",
+    "handle": "@JMilei",
+    "query": "(Milei OR @JMilei) -is:retweet",
+    "trackerId": "38c3b148-dffc-4ec7-8bc3-5bf6ee6a8c0b"
   }
 ]
