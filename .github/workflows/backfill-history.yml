@@ -67,12 +67,27 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          BACKUP=/tmp/backfill-out
+          rm -rf $BACKUP && mkdir -p $BACKUP
+          cp -r server/data $BACKUP/data
+          cp -r public/api $BACKUP/api
+
+          git fetch origin main
+          git reset --hard origin/main
+
+          rm -rf server/data public/api
+          cp -r $BACKUP/data server/data
+          cp -r $BACKUP/api public/api
+
           git add server/data public/api
           if ! git diff --cached --quiet; then
             git commit -m "data: backfill ${{ inputs.start_year }}-${{ inputs.end_year }} mentions (reset=${{ inputs.reset }})"
             for i in 1 2 3; do
-              git pull --rebase origin main && git push && break
-              echo "Push attempt $i failed, retrying..."
+              git push && break
+              echo "Push attempt $i failed, refetching and retrying..."
+              git fetch origin main
+              git rebase origin/main -X theirs || { git rebase --abort; break; }
               sleep $((i * 5))
             done
           else

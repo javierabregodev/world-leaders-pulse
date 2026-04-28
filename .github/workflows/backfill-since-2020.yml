@@ -61,15 +61,36 @@ jobs:
         run: npm run build-static
 
       - name: Commit updated data
+        # Workflow runs for hours; main can move under us. To guarantee a
+        # clean fast-forward, snapshot our outputs, hard-reset to remote,
+        # restore outputs, then commit. Backfill values always win.
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          # Snapshot outputs to a path outside the worktree
+          BACKUP=/tmp/backfill-out
+          rm -rf $BACKUP && mkdir -p $BACKUP
+          cp -r server/data $BACKUP/data
+          cp -r public/api $BACKUP/api
+
+          # Sync to latest origin/main (discards local changes)
+          git fetch origin main
+          git reset --hard origin/main
+
+          # Restore outputs over the synced tree
+          rm -rf server/data public/api
+          cp -r $BACKUP/data server/data
+          cp -r $BACKUP/api public/api
+
           git add server/data public/api
           if ! git diff --cached --quiet; then
             git commit -m "data: historical backfill since ${{ inputs.since }} (mode=${{ inputs.mode }})"
             for i in 1 2 3; do
-              git pull --rebase origin main && git push && break
-              echo "Push attempt $i failed, retrying..."
+              git push && break
+              echo "Push attempt $i failed, refetching and retrying..."
+              git fetch origin main
+              git rebase origin/main -X theirs || { git rebase --abort; break; }
               sleep $((i * 5))
             done
           else
