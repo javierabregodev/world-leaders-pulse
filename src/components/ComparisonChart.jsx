@@ -1,17 +1,9 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import {
   AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
 } from 'recharts';
 import { LEADER_COLORS, getLeaderColor } from '../mockData';
 import MOCK_LEADERS from '../mockData';
-import { InlineDatePicker } from './DatePicker';
-
-const CHART_DATE_OPTIONS = [
-  { key: '6m', label: '6M' },
-  { key: '1y', label: '1Y' },
-  { key: 'all', label: 'All' },
-];
-const DATE_TO_MONTHS = { '6m': 6, '1y': 12, 'all': 200 };
 
 const ALL_COLORS = [
   '#ef4444', '#f59e0b', '#3b82f6', '#10b981', '#8b5cf6',
@@ -22,36 +14,132 @@ const ALL_COLORS = [
 const TWITTER_PIC = (handle) => handle ? `https://unavatar.io/x/${handle.replace('@', '')}` : null;
 const FLAG_URL = (code) => `https://flagcdn.com/16x12/${code.toLowerCase()}.png`;
 
+// Same metric catalog the leader detail uses, kept in sync visually so a
+// user moves between dashboard and ficha without re-learning anything.
+const CHART_METRICS = [
+  { key: 'mentions',     label: 'Mentions',     source: 'history' },
+  { key: 'tweetsPosted', label: 'Tweets posted', source: 'tweetsCount' },
+  { key: 'followers',    label: 'Followers',    source: 'tracker', trackerField: 'followers' },
+  { key: 'rtsReceived',  label: 'RTs received', source: 'rtsReceivedHistory' },
+  { key: 'likes',        label: 'Likes',        source: 'tweets', tweetField: 'likes' },
+  { key: 'rts',          label: 'Retweets sent', source: 'tweets', tweetField: 'rts' },
+  { key: 'impressions',  label: 'Impressions',  source: 'tweets', tweetField: 'impressions' },
+  { key: 'replies',      label: 'Replies',      source: 'tweets', tweetField: 'replies' },
+];
+
 function formatCompact(n) {
+  if (n == null) return '—';
+  if (n >= 1_000_000_000) return (n / 1_000_000_000).toFixed(1) + 'B';
   if (n >= 1_000_000) return (n / 1_000_000).toFixed(1) + 'M';
   if (n >= 1_000) return (n / 1_000).toFixed(0) + 'K';
   return n.toString();
 }
 
 function getColorForLeader(id, index) {
-  // LEADER_COLORS still wins (curated picks); fall back to the deterministic
-  // hash so new leaders never collide with each other in the comparison view.
   return LEADER_COLORS[id] || getLeaderColor(id) || ALL_COLORS[index % ALL_COLORS.length];
 }
 
-// Aggregate daily history into monthly buckets
-function dailyToMonthly(history) {
-  const byMonth = {};
-  for (const h of history || []) {
-    const month = (h.date || '').slice(0, 7); // YYYY-MM
-    if (!month) continue;
-    byMonth[month] = (byMonth[month] || 0) + (h.count || 0);
+function periodToDates(period) {
+  const today = new Date();
+  const fmt = d => d.toISOString().slice(0, 10);
+  if (typeof period === 'object' && period?.type === 'month') {
+    const y = period.year;
+    const m = String(period.month).padStart(2, '0');
+    const lastDay = new Date(y, period.month, 0).getDate();
+    return { since: `${y}-${m}-01`, until: `${y}-${m}-${lastDay}` };
   }
-  return byMonth;
+  if (typeof period === 'object' && period?.type === 'year') {
+    const y = period.year;
+    const isCurrentYear = y === new Date().getFullYear();
+    return { since: `${y}-01-01`, until: isCurrentYear ? null : `${y}-12-31` };
+  }
+  switch (period) {
+    case 'today':     return { since: fmt(today), until: null };
+    case 'yesterday': { const d = new Date(today); d.setDate(d.getDate() - 1); return { since: fmt(d), until: fmt(today) }; }
+    case '7d':        { const d = new Date(today); d.setDate(d.getDate() - 7); return { since: fmt(d), until: null }; }
+    case '30d':       { const d = new Date(today); d.setDate(d.getDate() - 30); return { since: fmt(d), until: null }; }
+    case '365d':      { const d = new Date(today); d.setFullYear(d.getFullYear() - 1); return { since: fmt(d), until: null }; }
+    case 'all':       return { since: null, until: null };
+    default:          return { since: fmt(today), until: null };
+  }
 }
 
-export default function ComparisonChart() {
-  const [chartRange, setChartRange] = useState('1y');
+// For the X axis: with very short windows show every day, otherwise drop
+// to monthly buckets so the line stays readable. Tracker (cumulative
+// point-in-time) bypasses bucketing entirely — daily values are sampled.
+function pickGranularity(since, until) {
+  if (!since) return 'monthly';
+  const start = new Date(since + 'T00:00:00Z');
+  const end = until ? new Date(until + 'T00:00:00Z') : new Date();
+  const days = Math.max(1, Math.round((end - start) / 86400000));
+  if (days <= 60) return 'daily';
+  if (days <= 365 * 2) return 'monthly';
+  return 'quarterly';
+}
+
+function aggregateSeries(series, granularity) {
+  if (granularity === 'daily') {
+    return series.map(p => ({ date: p.date, count: p.count }));
+  }
+  const buckets = {};
+  for (const p of series) {
+    let key;
+    if (granularity === 'monthly') key = (p.date || '').slice(0, 7);
+    else if (granularity === 'quarterly') {
+      const y = p.date.slice(0, 4);
+      const m = parseInt(p.date.slice(5, 7), 10);
+      key = `${y} Q${Math.ceil(m / 3)}`;
+    } else key = p.date;
+    if (!key) continue;
+    buckets[key] = (buckets[key] || 0) + (p.count || 0);
+  }
+  return Object.entries(buckets).sort(([a], [b]) => a.localeCompare(b)).map(([date, count]) => ({ date, count }));
+}
+
+function tweetsCountByDay(tweets) {
+  const byDate = {};
+  for (const t of tweets || []) {
+    if (!t.date) continue;
+    const d = new Date(t.date * 1000).toISOString().slice(0, 10);
+    byDate[d] = (byDate[d] || 0) + 1;
+  }
+  return Object.entries(byDate).sort(([a], [b]) => a.localeCompare(b))
+    .map(([date, count]) => ({ date, count }));
+}
+
+function tweetsFieldByDay(tweets, field) {
+  const byDate = {};
+  for (const t of tweets || []) {
+    if (!t.date) continue;
+    const d = new Date(t.date * 1000).toISOString().slice(0, 10);
+    byDate[d] = (byDate[d] || 0) + (t[field] || 0);
+  }
+  return Object.entries(byDate).sort(([a], [b]) => a.localeCompare(b))
+    .map(([date, count]) => ({ date, count }));
+}
+
+function trackerToSeries(snapshots, field) {
+  return (snapshots || [])
+    .filter(s => s.date && s[field] != null)
+    .sort((a, b) => a.date.localeCompare(b.date))
+    .map(s => ({ date: s.date, count: s[field] }));
+}
+
+function filterRange(series, since, until) {
+  return (series || []).filter(p => (!since || p.date >= since) && (!until || p.date <= until));
+}
+
+export default function ComparisonChart({ period }) {
   const [selectedIds, setSelectedIds] = useState(['trump', 'modi', 'macron', 'erdogan', 'putin']);
+  const [metric, setMetric] = useState('mentions');
   const [showAddMenu, setShowAddMenu] = useState(false);
   const [addSearch, setAddSearch] = useState('');
-  const [leaderHistories, setLeaderHistories] = useState({}); // id → { 'YYYY-MM': count }
+  const [leaderDetails, setLeaderDetails] = useState({}); // id → leader json
+  const [leaderTweets, setLeaderTweets] = useState({});   // id → tweets[] (lazy)
   const addRef = useRef(null);
+
+  const activeMetric = CHART_METRICS.find(m => m.key === metric) || CHART_METRICS[0];
+  const needsTweets = activeMetric.source === 'tweets' || activeMetric.source === 'tweetsCount';
 
   useEffect(() => {
     const close = (e) => { if (addRef.current && !addRef.current.contains(e.target)) setShowAddMenu(false); };
@@ -59,57 +147,79 @@ export default function ComparisonChart() {
     return () => document.removeEventListener('mousedown', close);
   }, []);
 
-  // Fetch real history for each selected leader
+  // Always fetch leader detail (history, tracker, rts received) — small.
   useEffect(() => {
     selectedIds.forEach(id => {
-      if (leaderHistories[id]) return; // already fetched
+      if (leaderDetails[id]) return;
       fetch(`/api/leaders/${id}.json`)
         .then(r => r.ok ? r.json() : null)
-        .then(data => {
-          if (data?.history) {
-            setLeaderHistories(prev => ({ ...prev, [id]: dailyToMonthly(data.history) }));
-          }
-        })
+        .then(data => { if (data) setLeaderDetails(prev => ({ ...prev, [id]: data })); })
         .catch(() => {});
     });
   }, [selectedIds]);
 
-  // Build chart data from real monthly aggregates
-  const months = DATE_TO_MONTHS[typeof chartRange === 'string' ? chartRange : 'all'] || 200;
-  const now = new Date();
-  const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-
-  // Collect all months that have data for selected leaders (no duplicates)
-  const allMonthsSet = new Set();
-  selectedIds.forEach(id => {
-    const byMonth = leaderHistories[id] || {};
-    Object.keys(byMonth).forEach(m => {
-      // Exclude future months (shouldn't happen but safety)
-      if (m <= currentMonth) allMonthsSet.add(m);
-    });
-  });
-  const allMonths = [...allMonthsSet].sort().slice(-months);
-
-  const data = allMonths.map(month => {
-    const point = { date: month };
+  // Tweets are heavier — only fetch when a tweet-derived metric is active.
+  useEffect(() => {
+    if (!needsTweets) return;
     selectedIds.forEach(id => {
-      point[id] = leaderHistories[id]?.[month] ?? 0;
+      if (leaderTweets[id]) return;
+      fetch(`/api/tweets/${id}.json`)
+        .then(r => r.ok ? r.json() : [])
+        .then(data => setLeaderTweets(prev => ({ ...prev, [id]: data || [] })))
+        .catch(() => setLeaderTweets(prev => ({ ...prev, [id]: [] })));
     });
-    return point;
-  });
+  }, [selectedIds, metric, needsTweets]);
+
+  const { since, until } = periodToDates(period);
+  const granularity = pickGranularity(since, until);
+  const isCumulative = activeMetric.source === 'tracker';
+
+  // Build per-leader series in the chosen granularity, scoped to the period.
+  const leaderSeries = useMemo(() => {
+    const result = {};
+    for (const id of selectedIds) {
+      const detail = leaderDetails[id];
+      if (!detail) { result[id] = []; continue; }
+      let raw;
+      if (activeMetric.source === 'history') {
+        raw = (detail.history || []).map(h => ({ date: h.date, count: h.count }));
+      } else if (activeMetric.source === 'rtsReceivedHistory') {
+        raw = (detail.rtsReceivedHistory || []).map(h => ({ date: h.date, count: h.count }));
+      } else if (activeMetric.source === 'tracker') {
+        raw = trackerToSeries(detail.tracker?.snapshots, activeMetric.trackerField);
+      } else if (activeMetric.source === 'tweetsCount') {
+        raw = tweetsCountByDay(leaderTweets[id]);
+      } else if (activeMetric.source === 'tweets') {
+        raw = tweetsFieldByDay(leaderTweets[id], activeMetric.tweetField);
+      } else raw = [];
+
+      raw = filterRange(raw, since, until);
+      result[id] = isCumulative ? raw.map(p => ({ date: p.date, count: p.count })) : aggregateSeries(raw, granularity);
+    }
+    return result;
+  }, [selectedIds, leaderDetails, leaderTweets, activeMetric, since, until, granularity, isCumulative]);
+
+  // Merge per-leader series on a shared X axis.
+  const data = useMemo(() => {
+    const allKeys = new Set();
+    for (const id of selectedIds) for (const p of leaderSeries[id] || []) allKeys.add(p.date);
+    const sorted = [...allKeys].sort();
+    return sorted.map(k => {
+      const point = { date: k };
+      for (const id of selectedIds) {
+        const found = (leaderSeries[id] || []).find(p => p.date === k);
+        point[id] = found ? found.count : 0;
+      }
+      return point;
+    });
+  }, [selectedIds, leaderSeries]);
 
   function addLeader(id) {
-    if (!selectedIds.includes(id)) {
-      setSelectedIds(prev => [...prev, id]);
-    }
-    setShowAddMenu(false);
-    setAddSearch('');
+    if (!selectedIds.includes(id)) setSelectedIds(prev => [...prev, id]);
+    setShowAddMenu(false); setAddSearch('');
   }
-
   function removeLeader(id) {
-    if (selectedIds.length > 1) {
-      setSelectedIds(prev => prev.filter(x => x !== id));
-    }
+    if (selectedIds.length > 1) setSelectedIds(prev => prev.filter(x => x !== id));
   }
 
   const availableToAdd = MOCK_LEADERS.filter(l => !selectedIds.includes(l.id));
@@ -119,17 +229,33 @@ export default function ComparisonChart() {
 
   return (
     <div>
-      <div className="flex items-start sm:items-center justify-between mb-3 flex-col sm:flex-row gap-2">
+      <div className="flex items-start justify-between mb-3 flex-col sm:flex-row gap-2">
         <div>
-          <h2 className="text-sm font-semibold text-gray-900">Leader Comparison</h2>
-          <p className="text-xs text-gray-400 mt-0.5">Monthly mentions — click to toggle, x to remove</p>
+          <h2 className="text-sm font-semibold text-gray-900">Leader Comparison · {activeMetric.label}</h2>
+          <p className="text-xs text-gray-400 mt-0.5">
+            {granularity === 'daily' ? 'Daily' : granularity === 'monthly' ? 'Monthly' : 'Quarterly'}
+            {' '}— click a chip's × to remove, search to add others
+          </p>
         </div>
-        <InlineDatePicker value={chartRange} onChange={setChartRange} options={CHART_DATE_OPTIONS} />
+      </div>
+
+      {/* Metric selector */}
+      <div className="flex flex-wrap gap-1.5 mb-3">
+        {CHART_METRICS.map(m => (
+          <button key={m.key} onClick={() => setMetric(m.key)}
+            className={`px-2.5 py-1 rounded-full text-[11px] font-medium transition-all border ${
+              metric === m.key
+                ? 'bg-gray-900 text-white border-gray-900'
+                : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300'
+            }`}>
+            {m.label}
+          </button>
+        ))}
       </div>
 
       <div className="flex flex-wrap items-center gap-1.5 mb-3">
         {selectedIds.map((id, i) => {
-          const leader = MOCK_LEADERS.find(l => l.id === id);
+          const leader = MOCK_LEADERS.find(l => l.id === id) || leaderDetails[id];
           if (!leader) return null;
           const color = getColorForLeader(id, i);
           const pic = TWITTER_PIC(leader.handle);
@@ -143,7 +269,7 @@ export default function ComparisonChart() {
                 <img src={pic} alt="" className="w-4 h-4 rounded-full object-cover" loading="lazy"
                   onError={(e) => { e.target.style.display = 'none'; }} />
               ) : null}
-              <span className="truncate max-w-[80px]">{leader.name.split(' ').pop()}</span>
+              <span className="truncate max-w-[80px]">{leader.name?.split(' ').pop()}</span>
               {selectedIds.length > 1 && (
                 <button
                   onClick={(e) => { e.stopPropagation(); removeLeader(id); }}
@@ -217,7 +343,7 @@ export default function ComparisonChart() {
               boxShadow: '0 4px 12px rgba(0,0,0,0.08)', fontSize: '12px',
             }}
             formatter={(val, name) => {
-              const leader = MOCK_LEADERS.find(l => l.id === name);
+              const leader = MOCK_LEADERS.find(l => l.id === name) || leaderDetails[name];
               return [formatCompact(val), leader?.name?.split(' ').pop() || name];
             }}
           />

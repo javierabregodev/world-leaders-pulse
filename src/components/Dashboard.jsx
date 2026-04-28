@@ -176,7 +176,7 @@ export default function Dashboard({ onSelectLeader }) {
         </div>
 
         <div className="bg-white rounded-2xl border border-gray-200/60 shadow-sm p-5 mb-5">
-          <ComparisonChart />
+          <ComparisonChart period={period} />
         </div>
 
         <div className="bg-white rounded-2xl border border-gray-200/60 shadow-sm overflow-hidden">
