@@ -21,8 +21,8 @@ const CHART_METRICS = [
   { key: 'tweetsPosted', label: 'Tweets posted', source: 'tweetsCount' },
   { key: 'followers',    label: 'Followers',    source: 'tracker', trackerField: 'followers' },
   { key: 'rtsReceived',  label: 'RTs received', source: 'rtsReceivedHistory' },
+  { key: 'rtsSent',      label: 'Retweets sent', source: 'tweetType', tweetType: 'retweet' },
   { key: 'likes',        label: 'Likes',        source: 'tweets', tweetField: 'likes' },
-  { key: 'rts',          label: 'Retweets sent', source: 'tweets', tweetField: 'rts' },
   { key: 'impressions',  label: 'Impressions',  source: 'tweets', tweetField: 'impressions' },
   { key: 'replies',      label: 'Replies',      source: 'tweets', tweetField: 'replies' },
 ];
@@ -107,6 +107,17 @@ function tweetsCountByDay(tweets) {
     .map(([date, count]) => ({ date, count }));
 }
 
+function tweetsTypeCountByDay(tweets, type) {
+  const byDate = {};
+  for (const t of tweets || []) {
+    if (!t.date || t.type !== type) continue;
+    const d = new Date(t.date * 1000).toISOString().slice(0, 10);
+    byDate[d] = (byDate[d] || 0) + 1;
+  }
+  return Object.entries(byDate).sort(([a], [b]) => a.localeCompare(b))
+    .map(([date, count]) => ({ date, count }));
+}
+
 function tweetsFieldByDay(tweets, field) {
   const byDate = {};
   for (const t of tweets || []) {
@@ -139,7 +150,7 @@ export default function ComparisonChart({ period }) {
   const addRef = useRef(null);
 
   const activeMetric = CHART_METRICS.find(m => m.key === metric) || CHART_METRICS[0];
-  const needsTweets = activeMetric.source === 'tweets' || activeMetric.source === 'tweetsCount';
+  const needsTweets = ['tweets', 'tweetsCount', 'tweetType'].includes(activeMetric.source);
 
   useEffect(() => {
     const close = (e) => { if (addRef.current && !addRef.current.contains(e.target)) setShowAddMenu(false); };
@@ -189,6 +200,8 @@ export default function ComparisonChart({ period }) {
         raw = trackerToSeries(detail.tracker?.snapshots, activeMetric.trackerField);
       } else if (activeMetric.source === 'tweetsCount') {
         raw = tweetsCountByDay(leaderTweets[id]);
+      } else if (activeMetric.source === 'tweetType') {
+        raw = tweetsTypeCountByDay(leaderTweets[id], activeMetric.tweetType);
       } else if (activeMetric.source === 'tweets') {
         raw = tweetsFieldByDay(leaderTweets[id], activeMetric.tweetField);
       } else raw = [];

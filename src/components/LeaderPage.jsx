@@ -250,16 +250,19 @@ const CHART_VIEWS = [
 // Available metrics for the over-time chart.
 // - 'mentions': real daily count of mentions of the leader (history)
 // - 'followers': tracker.snapshots.followers (interpolated daily)
-// - 'tweetsPosted': real daily count from the leader's own tweet timestamps
-// - 'rtsReceived': dedicated `retweets_of:` daily counts (new pipeline)
-// - 'likes/rts/impressions/replies': aggregated from leader.tweets per day
+// - 'tweetsPosted': count of tweets posted per day (any type)
+// - 'rtsSent': count of tweets where type === 'retweet' per day
+// - 'rtsReceived': dedicated `retweets_of:` daily counts
+// - 'likes/impressions/replies': aggregated engagement RECEIVED on the
+//   tweets posted that day (sum of t.likes etc. — these are counters
+//   the API reports per tweet, accumulating after the post).
 const CHART_METRICS = [
   { key: 'mentions', label: 'Mentions', source: 'history', color: '#6366f1' },
   { key: 'tweetsPosted', label: 'Tweets posted', source: 'tweetsCount', color: '#0ea5e9' },
   { key: 'followers', label: 'Followers', source: 'tracker', trackerField: 'followers', color: '#a855f7' },
   { key: 'rtsReceived', label: 'RTs received', source: 'rtsReceivedHistory', color: '#f59e0b' },
+  { key: 'rtsSent', label: 'Retweets sent', source: 'tweetType', tweetType: 'retweet', color: '#3b82f6' },
   { key: 'likes', label: 'Likes', source: 'tweets', tweetField: 'likes', color: '#ec4899' },
-  { key: 'rts', label: 'Retweets sent', source: 'tweets', tweetField: 'rts', color: '#3b82f6' },
   { key: 'impressions', label: 'Impressions', source: 'tweets', tweetField: 'impressions', color: '#06b6d4' },
   { key: 'replies', label: 'Replies', source: 'tweets', tweetField: 'replies', color: '#14b8a6' },
 ];
@@ -280,6 +283,21 @@ function tweetsCountByDay(tweets) {
   const byDate = {};
   for (const t of tweets || []) {
     if (!t.date) continue;
+    const d = new Date(t.date * 1000).toISOString().slice(0, 10);
+    byDate[d] = (byDate[d] || 0) + 1;
+  }
+  return Object.entries(byDate)
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([date, count]) => ({ date, count }));
+}
+
+// Count tweets of a specific type (retweet / reply / original) per day.
+// Used for "Retweets sent" — distinct from the receive-side RT count
+// which lives under leader.tweets[i].rts (totalRetweets the tweet got).
+function tweetsTypeCountByDay(tweets, type) {
+  const byDate = {};
+  for (const t of tweets || []) {
+    if (!t.date || t.type !== type) continue;
     const d = new Date(t.date * 1000).toISOString().slice(0, 10);
     byDate[d] = (byDate[d] || 0) + 1;
   }
@@ -393,6 +411,8 @@ export default function LeaderPage({ leaderId, onBack, onSelectLeader }) {
     sourceSeries = filterByPeriod(sourceSeries, since, until);
   } else if (activeMetric.source === 'tweetsCount') {
     sourceSeries = tweetsCountByDay(leader.tweets);
+  } else if (activeMetric.source === 'tweetType') {
+    sourceSeries = tweetsTypeCountByDay(leader.tweets, activeMetric.tweetType);
   } else if (activeMetric.source === 'rtsReceivedHistory') {
     // Daily counts of retweets to this leader's tweets, fetched separately
     // via `retweets_of:handle` historical count. Empty until the dedicated
