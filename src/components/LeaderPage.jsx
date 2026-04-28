@@ -235,11 +235,17 @@ export default function LeaderPage({ leaderId, onBack, onSelectLeader }) {
       });
   }, [leaderId, period]);
 
-  if (!mockLeader) return null;
-
-  // Use server data if available, otherwise fall back to mock (basic info only)
+  // mockData.js only covers a subset of leaders. Build the leader entirely
+  // from serverData when present, falling back to mockLeader for instant
+  // first paint, and finally to a minimal placeholder so the loading
+  // spinner can render without crashing on `leader.name`.
   const leader = serverData ? {
-    ...mockLeader,
+    ...(mockLeader || {}),
+    id: serverData.id || leaderId,
+    name: serverData.name || mockLeader?.name || '',
+    country: serverData.country || mockLeader?.country || '',
+    countryCode: serverData.countryCode || mockLeader?.countryCode || '',
+    handle: serverData.handle || mockLeader?.handle || null,
     totalAll: serverData.totalMentions ?? 0,
     engagement: serverData.engagement ?? null,
     topRetweeted: serverData.topRetweeted ?? [],
@@ -250,7 +256,7 @@ export default function LeaderPage({ leaderId, onBack, onSelectLeader }) {
     history: serverData.timeline
       ? timelineToDaily(serverData.timeline)
       : serverData.history ?? [],
-  } : mockLeader;
+  } : (mockLeader || { id: leaderId, name: '', country: '', countryCode: '', handle: null });
 
   // Pull the right preset out of index.json for ranking. Custom month/year
   // periods don't have a precomputed preset, so fall back to 'all'.
