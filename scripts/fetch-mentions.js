@@ -84,6 +84,20 @@ async function getAllCountPoints(resourceId) {
   return all;
 }
 
+// Dedupe a list of condensed tweets by id, last-occurrence wins. The cron
+// concatenates "older bucket" + "new 7-day fetch" each run; near the
+// 7-day boundary the API may include a tweet that's also in the kept
+// older slice, leading to duplicates that accumulate run after run with
+// only the engagement counters drifting upward each time.
+function dedupeTweets(tweets) {
+  const byId = new Map();
+  for (const t of tweets || []) {
+    if (!t?.id) continue;
+    byId.set(t.id, t);
+  }
+  return [...byId.values()];
+}
+
 function reprocessFromTweets(tweets, leadersList) {
   let totalLikes = 0, totalRTs = 0, totalImpressions = 0, totalReplies = 0;
   let originals = 0, rtsSent = 0, repliesSent = 0;
@@ -129,8 +143,11 @@ function rebuildMerged(engagement, leaderId, leadersList) {
   if (yearKeys.length === 0) return;
   const allTweets = [];
   for (const yk of yearKeys) { if (engagement[yk]?.tweets) allTweets.push(...engagement[yk].tweets); }
-  const rebuilt = reprocessFromTweets(allTweets, leadersList);
-  engagement[leaderId] = { ...rebuilt, lastUpdated: new Date().toISOString(), tweetCount: allTweets.length };
+  // _alltime + _<year> buckets typically overlap (alltime spans the same
+  // years individual buckets cover), so dedupe before re-aggregating.
+  const deduped = dedupeTweets(allTweets);
+  const rebuilt = reprocessFromTweets(deduped, leadersList);
+  engagement[leaderId] = { ...rebuilt, lastUpdated: new Date().toISOString(), tweetCount: deduped.length };
 }
 
 async function main() {
@@ -210,7 +227,9 @@ async function main() {
       const yearKey = `${leader.id}_${currentYear}`;
       const existing = engagement[yearKey] || {};
       const olderTweets = (existing.tweets || []).filter(t => (t.date || 0) < sevenDaysAgoTs);
-      const newTweets = [...olderTweets, ...(processed.tweets || [])];
+      // Dedupe by id — fresh (processed.tweets) wins over older snapshots
+      // so the engagement counters always reflect the latest API read.
+      const newTweets = dedupeTweets([...olderTweets, ...(processed.tweets || [])]);
       const reproc = reprocessFromTweets(newTweets, leaders);
       engagement[yearKey] = { ...reproc, year: currentYear, lastUpdated: new Date().toISOString(), tweetCount: newTweets.length };
 

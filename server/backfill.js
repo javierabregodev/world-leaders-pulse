@@ -163,26 +163,40 @@ async function backfillTweets(leader, year) {
   return processTweets(tweets, username, leader.id);
 }
 
+function dedupeTweets(tweets) {
+  const byId = new Map();
+  for (const t of tweets || []) {
+    if (!t?.id) continue;
+    byId.set(t.id, t);
+  }
+  return [...byId.values()];
+}
+
 function rebuildMergedEngagement(engagement, leaderId) {
   const yearKeys = Object.keys(engagement).filter(k => k.startsWith(leaderId + '_'));
   if (yearKeys.length === 0) return;
 
-  const allTweets = [];
-  let totalLikes = 0, totalRTs = 0, totalImpressions = 0, totalReplies = 0;
-  let totalTweets = 0, originals = 0, rtsSent = 0, repliesSent = 0;
-
+  const allTweetsRaw = [];
   for (const yk of yearKeys) {
     const yd = engagement[yk];
-    if (!yd?.engagement) continue;
-    totalLikes += yd.engagement.totalLikes || 0;
-    totalRTs += yd.engagement.totalRTs || 0;
-    totalImpressions += yd.engagement.totalImpressions || 0;
-    totalReplies += yd.engagement.totalReplies || 0;
-    totalTweets += yd.engagement.tweetsPosted || 0;
-    originals += yd.engagement.originalTweets || 0;
-    rtsSent += yd.engagement.retweetsSent || 0;
-    repliesSent += yd.engagement.repliesSent || 0;
-    if (yd.tweets) allTweets.push(...yd.tweets);
+    if (yd?.tweets) allTweetsRaw.push(...yd.tweets);
+  }
+  // Dedupe across year buckets — _alltime and _<year> typically overlap.
+  const allTweets = dedupeTweets(allTweetsRaw);
+
+  // Recompute aggregates from the deduped tweet list rather than summing
+  // per-bucket totals (which would double-count overlapping years).
+  let totalLikes = 0, totalRTs = 0, totalImpressions = 0, totalReplies = 0;
+  let totalTweets = allTweets.length;
+  let originals = 0, rtsSent = 0, repliesSent = 0;
+  for (const t of allTweets) {
+    totalLikes += t.likes || 0;
+    totalRTs += t.rts || 0;
+    totalImpressions += t.impressions || 0;
+    totalReplies += t.replies || 0;
+    if (t.type === 'original') originals++;
+    else if (t.type === 'retweet') rtsSent++;
+    else if (t.type === 'reply') repliesSent++;
   }
 
   const rtCounts = {}, mentionCounts = {}, hashCounts = {};
