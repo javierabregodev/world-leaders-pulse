@@ -6,6 +6,7 @@ import {
 import LeaderSocialGraph from './LeaderSocialGraph';
 import DatePicker from './DatePicker';
 import { filterLeader } from '../lib/filterData';
+import { interpolateTrackerToDaily } from '../lib/interpolate';
 
 const filterClientSide = filterLeader;
 
@@ -39,81 +40,8 @@ function computeTracker(tracker, { since, until }) {
   };
 }
 
-// Tracker snapshots come in monthly cadence (~30-day gaps). To support
-// daily-granular date filtering ("Last 7 days growth", per-day chart),
-// we interpolate between known anchors. Each day inside a gap gets a
-// share of the gap's delta weighted by that day's mention volume — so
-// big news days drive bigger follower jumps, mirroring reality. Days
-// with no mention data fall back to linear (equal share). The boundary
-// snapshots are kept exact; interpolated days are flagged with a flag.
-function enumerateDates(startISO, endISO) {
-  const out = [];
-  const d = new Date(startISO + 'T00:00:00Z');
-  const end = new Date(endISO + 'T00:00:00Z');
-  while (d < end) {
-    out.push(d.toISOString().slice(0, 10));
-    d.setUTCDate(d.getUTCDate() + 1);
-  }
-  return out;
-}
-
-// Only `followers` and `lists` are interpolated — those genuinely don't
-// change daily and we have no better signal between monthly snapshots.
-// `tweets` and `mentionsReceived` are computed from real data sources
-// elsewhere (per-tweet timestamps, mentions history). `retweetsReceived`
-// has its own dedicated `retweets_of:` daily count series. `following`
-// barely moves; we just hold the latest snapshot value.
-const INTERP_FIELDS = ['followers', 'lists'];
-// Other tracker fields we want to preserve as point-in-time anchor values
-// (without interpolation) so monthly snapshots still surface in the chart.
-const PASSTHROUGH_FIELDS = ['tweets', 'mentionsReceived', 'retweetsReceived', 'following'];
-
-function interpolateTrackerToDaily(tracker, history) {
-  if (!tracker?.snapshots?.length) return tracker;
-  const snaps = [...tracker.snapshots].sort((a, b) => (a.date || '').localeCompare(b.date || ''));
-  if (snaps.length < 2) return tracker;
-
-  const mentionsByDate = {};
-  for (const h of history || []) {
-    if (h.date) mentionsByDate[h.date] = h.count || 0;
-  }
-
-  const daily = [];
-
-  for (let i = 0; i < snaps.length - 1; i++) {
-    const s1 = snaps[i];
-    const s2 = snaps[i + 1];
-    if (!s1.date || !s2.date) continue;
-
-    daily.push({ ...s1, interpolated: false });
-
-    const inner = enumerateDates(s1.date, s2.date).slice(1); // exclusive of s2
-    if (inner.length === 0) continue;
-
-    const mentionWeights = inner.map(d => Math.max(0, mentionsByDate[d] || 0));
-    const totalMentions = mentionWeights.reduce((s, v) => s + v, 0);
-    const weights = totalMentions > 0
-      ? mentionWeights.map(m => m / totalMentions)
-      : inner.map(() => 1 / inner.length);
-
-    const deltas = {};
-    for (const f of INTERP_FIELDS) deltas[f] = (s2[f] ?? 0) - (s1[f] ?? 0);
-
-    const cum = Object.fromEntries(INTERP_FIELDS.map(f => [f, 0]));
-    inner.forEach((d, j) => {
-      for (const f of INTERP_FIELDS) cum[f] += deltas[f] * weights[j];
-      const point = { date: d, interpolated: true };
-      for (const f of INTERP_FIELDS) point[f] = Math.round((s1[f] ?? 0) + cum[f]);
-      // Pass-through fields hold the previous anchor value until the next
-      // snapshot (no interpolation guesswork).
-      for (const f of PASSTHROUGH_FIELDS) point[f] = s1[f];
-      daily.push(point);
-    });
-  }
-  daily.push({ ...snaps[snaps.length - 1], interpolated: false });
-
-  return { ...tracker, snapshots: daily };
-}
+// Tracker daily interpolation lives in src/lib/interpolate.js so the
+// dashboard's ComparisonChart can apply the same logic.
 
 const TWITTER_PIC = (handle) => handle ? `https://unavatar.io/x/${handle.replace('@', '')}` : null;
 const FLAG_URL = (code) => `https://flagcdn.com/48x36/${code.toLowerCase()}.png`;

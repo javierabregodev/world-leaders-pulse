@@ -4,6 +4,7 @@ import {
 } from 'recharts';
 import { LEADER_COLORS, getLeaderColor } from '../mockData';
 import MOCK_LEADERS from '../mockData';
+import { interpolateTrackerToDaily } from '../lib/interpolate';
 
 const ALL_COLORS = [
   '#ef4444', '#f59e0b', '#3b82f6', '#10b981', '#8b5cf6',
@@ -197,7 +198,10 @@ export default function ComparisonChart({ period }) {
       } else if (activeMetric.source === 'rtsReceivedHistory') {
         raw = (detail.rtsReceivedHistory || []).map(h => ({ date: h.date, count: h.count }));
       } else if (activeMetric.source === 'tracker') {
-        raw = trackerToSeries(detail.tracker?.snapshots, activeMetric.trackerField);
+        // Apply the same daily interpolation used on the leader detail
+        // page so 'Last 7/30 Days' isn't a single-point line.
+        const interpolated = interpolateTrackerToDaily(detail.tracker, detail.history);
+        raw = trackerToSeries(interpolated?.snapshots, activeMetric.trackerField);
       } else if (activeMetric.source === 'tweetsCount') {
         raw = tweetsCountByDay(leaderTweets[id]);
       } else if (activeMetric.source === 'tweetType') {
