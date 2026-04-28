@@ -75,7 +75,13 @@ export function filterLeader(leader, since, until) {
         .map(([t, c]) => ({ tag: t, count: c }))
         .sort((a, b) => b.count - a.count).slice(0, 15);
     } else {
+      // No tweets in the selected window → reset all derived top lists.
+      // Without this, last-fetch's top accounts/hashtags would leak into
+      // periods where the leader didn't post anything.
       engagement = null;
+      topRetweeted = [];
+      topMentioned = [];
+      topHashtags = [];
     }
 
     return {

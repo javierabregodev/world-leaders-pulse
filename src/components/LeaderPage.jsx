@@ -55,6 +55,14 @@ function formatCompact(n) {
   return n.toString();
 }
 
+function formatPrettyDate(iso) {
+  if (!iso) return '';
+  const [y, m, d] = iso.split('-').map(Number);
+  if (!y || !m || !d) return iso;
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  return `${months[m - 1]} ${d}, ${y}`;
+}
+
 // Date helpers
 function periodToDates(period) {
   const today = new Date();
@@ -142,28 +150,23 @@ const CHART_VIEWS = [
 export default function LeaderPage({ leaderId, onBack, onSelectLeader }) {
   const mockLeader = getLeaderById(leaderId);
   const [period, setPeriod] = useState('7d');
-  const [view, setView] = useState('monthly');
+  const [view, setView] = useState('daily');
   const [serverData, setServerData] = useState(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-
-  // Fetch data when period or leader changes
-  // Presets use cached data filtered server-side (instant).
-  // "All Time" also uses cached data. Only "Custom" hits the live API.
-  // Everything uses cached data — no live API calls needed.
-  const needsLiveQuery = false;
 
   useEffect(() => {
     setError(null);
-    // Load leader detail JSON once, then filter client-side based on period
     setLoading(true);
+    // Clear stale data immediately so the period change doesn't flash
+    // the previous period's numbers/lists while the new fetch is in flight.
+    setServerData(null);
     Promise.all([
       fetch(`/api/leaders/${leaderId}.json`).then(r => r.ok ? r.json() : null),
       fetch(`/api/tweets/${leaderId}.json`).then(r => r.ok ? r.json() : []).catch(() => []),
     ])
       .then(([data, tweets]) => {
         if (!data) { setLoading(false); return; }
-        // Filter history + tweets by period
         const { since, until } = periodToDates(period);
         const dataWithTweets = { ...data, tweets };
         const filtered = filterClientSide(dataWithTweets, since, until);
@@ -229,24 +232,17 @@ export default function LeaderPage({ leaderId, onBack, onSelectLeader }) {
       </header>
 
       <main className="max-w-5xl mx-auto px-4 sm:px-6 py-5">
-        {/* Loading indicator */}
-        {loading && (
-          <div className="mb-4 bg-white rounded-2xl border border-indigo-200/50 shadow-sm p-5 flex items-center gap-4">
-            <div className="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center flex-shrink-0">
-              <div className="w-5 h-5 border-2 border-indigo-200 border-t-indigo-500 rounded-full animate-spin" />
-            </div>
-            <div>
-              <p className="text-sm font-medium text-gray-900">Fetching live data</p>
-              <p className="text-xs text-gray-400 mt-0.5">Querying Tweet Binder for {periodLabel}... ~20 seconds</p>
-            </div>
+        {loading ? (
+          <div className="flex flex-col items-center justify-center py-32">
+            <div className="w-12 h-12 border-[3px] border-indigo-200 border-t-indigo-500 rounded-full animate-spin" />
+            <p className="text-sm text-gray-500 mt-4">Loading {leader.name}…</p>
           </div>
-        )}
-
-        {error && !loading && (
-          <div className="mb-4 px-3 py-2 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-600">
+        ) : error ? (
+          <div className="px-3 py-2 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-600">
             {error}
           </div>
-        )}
+        ) : (
+        <>
 
         {/* Hero */}
         <div className="bg-white rounded-2xl border border-gray-200/60 shadow-sm p-5 mb-5">
@@ -287,7 +283,7 @@ export default function LeaderPage({ leaderId, onBack, onSelectLeader }) {
             <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 px-1 flex items-center gap-2">
               Account overview
               {leader.tracker?.snapshotDate && (
-                <span className="text-gray-300 font-normal normal-case">· snapshot {leader.tracker.snapshotDate}</span>
+                <span className="text-gray-300 font-normal normal-case">· data as of {formatPrettyDate(leader.tracker.snapshotDate)}</span>
               )}
             </h3>
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
@@ -332,44 +328,58 @@ export default function LeaderPage({ leaderId, onBack, onSelectLeader }) {
           </div>
         )}
 
-        {/* Engagement stats */}
-        {eng && (
+        {/* Engagement stats — always shown when the leader has a handle, even if
+            they didn't tweet in the selected window (so the section doesn't
+            disappear unexpectedly when filtering). */}
+        {leader.handle && (
           <div className="mb-5">
             <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 px-1">
               Engagement from own tweets
             </h3>
-            <div className="grid grid-cols-3 sm:grid-cols-6 gap-2 mb-3">
-              <EngStat label="Tweets" value={eng.tweetsPosted} icon="📝" />
-              <EngStat label="Likes" value={formatCompact(eng.totalLikes)} icon="❤️" />
-              <EngStat label="Retweets" value={formatCompact(eng.totalRTs)} icon="🔁" />
-              <EngStat label="Impressions" value={formatCompact(eng.totalImpressions)} icon="👁" />
-              <EngStat label="Replies" value={formatCompact(eng.totalReplies)} icon="💬" />
-              <EngStat label="Eng. Rate" value={eng.engagementRate + '%'} icon="📊" highlight />
-            </div>
+            {eng ? (
+              <>
+                <div className="grid grid-cols-3 sm:grid-cols-6 gap-2 mb-3">
+                  <EngStat label="Tweets" value={eng.tweetsPosted} icon="📝" />
+                  <EngStat label="Likes" value={formatCompact(eng.totalLikes)} icon="❤️" />
+                  <EngStat label="Retweets" value={formatCompact(eng.totalRTs)} icon="🔁" />
+                  <EngStat label="Impressions" value={formatCompact(eng.totalImpressions)} icon="👁" />
+                  <EngStat label="Replies" value={formatCompact(eng.totalReplies)} icon="💬" />
+                  <EngStat label="Eng. Rate" value={eng.engagementRate + '%'} icon="📊" highlight />
+                </div>
 
-            {/* Tweet breakdown bar */}
-            <div className="bg-white rounded-xl border border-gray-200/60 p-4">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-semibold text-gray-700">Tweet Breakdown</span>
-                <span className="text-[11px] text-gray-400">{eng.tweetsPosted} total</span>
+                {/* Tweet breakdown bar */}
+                <div className="bg-white rounded-xl border border-gray-200/60 p-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-xs font-semibold text-gray-700">Tweet Breakdown</span>
+                    <span className="text-[11px] text-gray-400">{eng.tweetsPosted} total</span>
+                  </div>
+                  <div className="flex rounded-full overflow-hidden h-3 bg-gray-100">
+                    {eng.originalTweets > 0 && (
+                      <div className="bg-indigo-500 transition-all" style={{ width: `${(eng.originalTweets / eng.tweetsPosted) * 100}%` }} />
+                    )}
+                    {eng.retweetsSent > 0 && (
+                      <div className="bg-emerald-400 transition-all" style={{ width: `${(eng.retweetsSent / eng.tweetsPosted) * 100}%` }} />
+                    )}
+                    {eng.repliesSent > 0 && (
+                      <div className="bg-amber-400 transition-all" style={{ width: `${(eng.repliesSent / eng.tweetsPosted) * 100}%` }} />
+                    )}
+                  </div>
+                  <div className="flex gap-4 mt-2">
+                    <LegendItem color="bg-indigo-500" label="Original" value={eng.originalTweets} />
+                    <LegendItem color="bg-emerald-400" label="Retweets" value={eng.retweetsSent} />
+                    <LegendItem color="bg-amber-400" label="Replies" value={eng.repliesSent} />
+                  </div>
+                </div>
+              </>
+            ) : (
+              <div className="bg-white rounded-xl border border-gray-200/60 p-8 text-center">
+                <div className="text-2xl mb-2 opacity-40">🤫</div>
+                <p className="text-sm text-gray-500">
+                  {leader.name.split(' ')[0]} didn't tweet in <span className="font-medium text-gray-700">{periodLabel}</span>.
+                </p>
+                <p className="text-[11px] text-gray-400 mt-1">Try widening the date range to see engagement.</p>
               </div>
-              <div className="flex rounded-full overflow-hidden h-3 bg-gray-100">
-                {eng.originalTweets > 0 && (
-                  <div className="bg-indigo-500 transition-all" style={{ width: `${(eng.originalTweets / eng.tweetsPosted) * 100}%` }} />
-                )}
-                {eng.retweetsSent > 0 && (
-                  <div className="bg-emerald-400 transition-all" style={{ width: `${(eng.retweetsSent / eng.tweetsPosted) * 100}%` }} />
-                )}
-                {eng.repliesSent > 0 && (
-                  <div className="bg-amber-400 transition-all" style={{ width: `${(eng.repliesSent / eng.tweetsPosted) * 100}%` }} />
-                )}
-              </div>
-              <div className="flex gap-4 mt-2">
-                <LegendItem color="bg-indigo-500" label="Original" value={eng.originalTweets} />
-                <LegendItem color="bg-emerald-400" label="Retweets" value={eng.retweetsSent} />
-                <LegendItem color="bg-amber-400" label="Replies" value={eng.repliesSent} />
-              </div>
-            </div>
+            )}
           </div>
         )}
 
@@ -412,6 +422,8 @@ export default function LeaderPage({ leaderId, onBack, onSelectLeader }) {
 
         {/* Social graph */}
         <LeaderSocialGraph leader={leader} onSelectLeader={onSelectLeader} />
+        </>
+        )}
       </main>
     </div>
   );
