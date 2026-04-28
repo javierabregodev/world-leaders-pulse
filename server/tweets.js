@@ -237,6 +237,12 @@ export function processTweets(tweets, leaderHandle, leaderId) {
       }
     }
 
+    // Tweet Binder gives us images/videos URLs and outbound links.
+    // Keep them on the condensed tweet so the UI can render galleries
+    // without re-fetching the raw transcript.
+    const images = Array.isArray(tweet.images) ? tweet.images.filter(Boolean) : [];
+    const videos = Array.isArray(tweet.videos) ? tweet.videos.filter(Boolean) : [];
+
     return {
       id: tweet._id,
       text,
@@ -247,6 +253,9 @@ export function processTweets(tweets, leaderHandle, leaderId) {
       impressions: counts.impressions || 0,
       replies: counts.totalReplies || 0,
       relatedHandles, // which accounts this tweet is about
+      images,
+      videos,
+      lang: tweet.lang || null,
     };
   });
 
