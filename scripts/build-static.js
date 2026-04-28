@@ -145,6 +145,7 @@ function main() {
         fetchedAt: tracker.fetchedAt,
       } : null,
       rtsReceivedHistory: rtsReceived[l.id] ?? [],
+      tweetCountsHistory: eng.tweetCountsHistory ?? [],
     };
     writeJSON(path.join(OUT_LEADERS, l.id + '.json'), detail);
   }

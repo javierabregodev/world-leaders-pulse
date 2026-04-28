@@ -98,6 +98,51 @@ function dedupeTweets(tweets) {
   return [...byId.values()];
 }
 
+function engagementScore(t) {
+  return (t.likes || 0) + (t.rts || 0) * 5 + (t.impressions || 0) / 100;
+}
+
+function pruneRepetitiveRTs(tweets, maxPerTarget) {
+  const nonRT = [];
+  const rtsByTarget = {};
+  for (const t of tweets) {
+    if (t.type !== 'retweet') { nonRT.push(t); continue; }
+    const m = (t.text || '').match(/^RT @(\w+)/i);
+    const key = m ? m[1].toLowerCase() : '__unknown__';
+    (rtsByTarget[key] ||= []).push(t);
+  }
+  const keptRTs = [];
+  for (const key of Object.keys(rtsByTarget)) {
+    const sorted = rtsByTarget[key].sort((a, b) => engagementScore(b) - engagementScore(a));
+    keptRTs.push(...sorted.slice(0, maxPerTarget));
+  }
+  return [...nonRT, ...keptRTs];
+}
+
+// Compact daily digest with every metric the chart needs, computed from
+// the full tweet list before any cap so time-series stay accurate for
+// prolific accounts (we cap stored tweets to 500 to avoid blowing
+// engagement.json past GitHub's 100MB push limit).
+function countTweetsByDay(tweets) {
+  const byDate = {};
+  for (const t of tweets || []) {
+    if (!t.date) continue;
+    const d = new Date(t.date * 1000).toISOString().slice(0, 10);
+    if (!byDate[d]) {
+      byDate[d] = { date: d, count: 0, likes: 0, rts: 0, impressions: 0, replies: 0, retweetsSent: 0, repliesSent: 0 };
+    }
+    const e = byDate[d];
+    e.count++;
+    e.likes += t.likes || 0;
+    e.rts += t.rts || 0;
+    e.impressions += t.impressions || 0;
+    e.replies += t.replies || 0;
+    if (t.type === 'retweet') e.retweetsSent++;
+    else if (t.type === 'reply') e.repliesSent++;
+  }
+  return Object.values(byDate).sort((a, b) => a.date.localeCompare(b.date));
+}
+
 function reprocessFromTweets(tweets, leadersList) {
   let totalLikes = 0, totalRTs = 0, totalImpressions = 0, totalReplies = 0;
   let originals = 0, rtsSent = 0, repliesSent = 0;
@@ -214,21 +259,38 @@ async function main() {
       const processed = processTweets(rawTweets, username, leader.id);
       if (!processed) continue;
 
-      // Single canonical bucket per leader (engagement[leaderId]). Year-
-      // suffix buckets and _alltime mirrors are gone — they were doubling
-      // the file size and pushed engagement.json past GitHub's 100MB hard
-      // limit during the global tweets-rts backfill.
+      // Single canonical bucket per leader. Tweets are capped to top
+      // engaging to keep engagement.json under GitHub's 100MB push
+      // limit; aggregates are recomputed from the full merged set so
+      // totals stay correct. Daily counts go to a separate compact
+      // series so the 'Tweets posted Over Time' chart doesn't lose
+      // precision from the cap.
+      const MAX_STORED_TWEETS = 500;
+      const MAX_RTS_PER_TARGET = 3;
       const existing = engagement[leader.id] || {};
       const olderTweets = (existing.tweets || []).filter(t => (t.date || 0) < sevenDaysAgoTs);
       const newTweets = dedupeTweets([...olderTweets, ...(processed.tweets || [])]);
       const reproc = reprocessFromTweets(newTweets, leaders);
+
+      const tweetCountsHistory = countTweetsByDay(newTweets);
+      const pruned = pruneRepetitiveRTs(newTweets, MAX_RTS_PER_TARGET);
+      const cappedTweets = [...pruned]
+        .sort((a, b) => engagementScore(b) - engagementScore(a))
+        .slice(0, MAX_STORED_TWEETS);
+
       engagement[leader.id] = {
-        ...reproc,
+        engagement: reproc.engagement,
+        topRetweeted: reproc.topRetweeted,
+        topMentioned: reproc.topMentioned,
+        topHashtags: reproc.topHashtags,
+        tweets: cappedTweets,
+        tweetCountsHistory,
         lastUpdated: new Date().toISOString(),
-        tweetCount: newTweets.length,
+        fullTweetCount: newTweets.length,
+        tweetCount: cappedTweets.length,
       };
       saveJSON(ENGAGEMENT_FILE, engagement);
-      console.log(`  [7-day report] merged ${newTweets.length} tweets`);
+      console.log(`  [7-day report] ${newTweets.length} tweets (capped to ${cappedTweets.length} for storage)`);
       await sleep(3000);
     } catch (err) {
       console.error(`  [7-day report] ERROR: ${err.message}`);

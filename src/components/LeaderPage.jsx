@@ -175,24 +175,21 @@ const CHART_VIEWS = [
   { key: 'yearly', label: 'Yearly' },
 ];
 
-// Available metrics for the over-time chart.
-// - 'mentions': real daily count of mentions of the leader (history)
-// - 'followers': tracker.snapshots.followers (interpolated daily)
-// - 'tweetsPosted': count of tweets posted per day (any type)
-// - 'rtsSent': count of tweets where type === 'retweet' per day
-// - 'rtsReceived': dedicated `retweets_of:` daily counts
-// - 'likes/impressions/replies': aggregated engagement RECEIVED on the
-//   tweets posted that day (sum of t.likes etc. — these are counters
-//   the API reports per tweet, accumulating after the post).
+// All tweet-derived metrics read from leader.tweetCountsHistory[], a
+// compact precomputed daily digest with one row per date and a column
+// per metric. We can't recompute these from leader.tweets[] because
+// that array is capped to top 500 most-engaging tweets (engagement.json
+// would otherwise exceed GitHub's 100MB push limit on prolific
+// accounts like Milei). The daily digest is computed BEFORE the cap.
 const CHART_METRICS = [
   { key: 'mentions', label: 'Mentions', source: 'history', color: '#6366f1' },
-  { key: 'tweetsPosted', label: 'Tweets posted', source: 'tweetsCount', color: '#0ea5e9' },
+  { key: 'tweetsPosted', label: 'Tweets posted', source: 'dailyDigest', dailyField: 'count', color: '#0ea5e9' },
   { key: 'followers', label: 'Followers', source: 'tracker', trackerField: 'followers', color: '#a855f7' },
   { key: 'rtsReceived', label: 'RTs received', source: 'rtsReceivedHistory', color: '#f59e0b' },
-  { key: 'rtsSent', label: 'Retweets sent', source: 'tweetType', tweetType: 'retweet', color: '#3b82f6' },
-  { key: 'likes', label: 'Likes', source: 'tweets', tweetField: 'likes', color: '#ec4899' },
-  { key: 'impressions', label: 'Impressions', source: 'tweets', tweetField: 'impressions', color: '#06b6d4' },
-  { key: 'replies', label: 'Replies', source: 'tweets', tweetField: 'replies', color: '#14b8a6' },
+  { key: 'rtsSent', label: 'Retweets sent', source: 'dailyDigest', dailyField: 'retweetsSent', color: '#3b82f6' },
+  { key: 'likes', label: 'Likes', source: 'dailyDigest', dailyField: 'likes', color: '#ec4899' },
+  { key: 'impressions', label: 'Impressions', source: 'dailyDigest', dailyField: 'impressions', color: '#06b6d4' },
+  { key: 'replies', label: 'Replies', source: 'dailyDigest', dailyField: 'replies', color: '#14b8a6' },
 ];
 
 function tweetsToDailySeries(tweets, field) {
@@ -316,6 +313,7 @@ export default function LeaderPage({ leaderId, onBack, onSelectLeader }) {
       ? timelineToDaily(serverData.timeline)
       : serverData.history ?? [],
     rtsReceivedHistory: serverData.rtsReceivedHistory ?? [],
+    tweetCountsHistory: serverData.tweetCountsHistory ?? [],
   } : (mockLeader || { id: leaderId, name: '', country: '', countryCode: '', handle: null });
 
   // Pull the right preset out of index.json for ranking. Custom month/year
@@ -337,10 +335,21 @@ export default function LeaderPage({ leaderId, onBack, onSelectLeader }) {
     // the chart matches the date filter even though it skips aggregation.
     const { since, until } = periodToDates(period);
     sourceSeries = filterByPeriod(sourceSeries, since, until);
-  } else if (activeMetric.source === 'tweetsCount') {
-    sourceSeries = tweetsCountByDay(leader.tweets);
-  } else if (activeMetric.source === 'tweetType') {
-    sourceSeries = tweetsTypeCountByDay(leader.tweets, activeMetric.tweetType);
+  } else if (activeMetric.source === 'dailyDigest') {
+    // Read the right column from the precomputed digest. Fallback for
+    // older data without the digest: sum/count from leader.tweets (less
+    // accurate when the tweet list is capped, but the chart still draws).
+    if (leader.tweetCountsHistory?.length) {
+      sourceSeries = leader.tweetCountsHistory.map(h => ({ date: h.date, count: h[activeMetric.dailyField] || 0 }));
+    } else if (activeMetric.dailyField === 'count') {
+      sourceSeries = tweetsCountByDay(leader.tweets);
+    } else if (activeMetric.dailyField === 'retweetsSent') {
+      sourceSeries = tweetsTypeCountByDay(leader.tweets, 'retweet');
+    } else if (activeMetric.dailyField === 'repliesSent') {
+      sourceSeries = tweetsTypeCountByDay(leader.tweets, 'reply');
+    } else {
+      sourceSeries = tweetsToDailySeries(leader.tweets, activeMetric.dailyField);
+    }
   } else if (activeMetric.source === 'rtsReceivedHistory') {
     // Daily counts of retweets to this leader's tweets, fetched separately
     // via `retweets_of:handle` historical count. Empty until the dedicated

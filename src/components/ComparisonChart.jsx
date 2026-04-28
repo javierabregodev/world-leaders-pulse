@@ -18,14 +18,14 @@ const FLAG_URL = (code) => `https://flagcdn.com/16x12/${code.toLowerCase()}.png`
 // Same metric catalog the leader detail uses, kept in sync visually so a
 // user moves between dashboard and ficha without re-learning anything.
 const CHART_METRICS = [
-  { key: 'mentions',     label: 'Mentions',     source: 'history' },
-  { key: 'tweetsPosted', label: 'Tweets posted', source: 'tweetsCount' },
-  { key: 'followers',    label: 'Followers',    source: 'tracker', trackerField: 'followers' },
-  { key: 'rtsReceived',  label: 'RTs received', source: 'rtsReceivedHistory' },
-  { key: 'rtsSent',      label: 'Retweets sent', source: 'tweetType', tweetType: 'retweet' },
-  { key: 'likes',        label: 'Likes',        source: 'tweets', tweetField: 'likes' },
-  { key: 'impressions',  label: 'Impressions',  source: 'tweets', tweetField: 'impressions' },
-  { key: 'replies',      label: 'Replies',      source: 'tweets', tweetField: 'replies' },
+  { key: 'mentions',     label: 'Mentions',      source: 'history' },
+  { key: 'tweetsPosted', label: 'Tweets posted', source: 'dailyDigest', dailyField: 'count' },
+  { key: 'followers',    label: 'Followers',     source: 'tracker', trackerField: 'followers' },
+  { key: 'rtsReceived',  label: 'RTs received',  source: 'rtsReceivedHistory' },
+  { key: 'rtsSent',      label: 'Retweets sent', source: 'dailyDigest', dailyField: 'retweetsSent' },
+  { key: 'likes',        label: 'Likes',         source: 'dailyDigest', dailyField: 'likes' },
+  { key: 'impressions',  label: 'Impressions',   source: 'dailyDigest', dailyField: 'impressions' },
+  { key: 'replies',      label: 'Replies',       source: 'dailyDigest', dailyField: 'replies' },
 ];
 
 function formatCompact(n) {
@@ -151,7 +151,11 @@ export default function ComparisonChart({ period }) {
   const addRef = useRef(null);
 
   const activeMetric = CHART_METRICS.find(m => m.key === metric) || CHART_METRICS[0];
-  const needsTweets = ['tweets', 'tweetsCount', 'tweetType'].includes(activeMetric.source);
+  // dailyDigest reads from leader.tweetCountsHistory (already in the
+  // detail JSON), so no extra tweets fetch needed for any chart metric
+  // — we just keep the fetch around for the (capped) tweets array used
+  // by Best Tweets / photo gallery on the leader detail page.
+  const needsTweets = false;
 
   useEffect(() => {
     const close = (e) => { if (addRef.current && !addRef.current.contains(e.target)) setShowAddMenu(false); };
@@ -202,12 +206,9 @@ export default function ComparisonChart({ period }) {
         // page so 'Last 7/30 Days' isn't a single-point line.
         const interpolated = interpolateTrackerToDaily(detail.tracker, detail.history);
         raw = trackerToSeries(interpolated?.snapshots, activeMetric.trackerField);
-      } else if (activeMetric.source === 'tweetsCount') {
-        raw = tweetsCountByDay(leaderTweets[id]);
-      } else if (activeMetric.source === 'tweetType') {
-        raw = tweetsTypeCountByDay(leaderTweets[id], activeMetric.tweetType);
-      } else if (activeMetric.source === 'tweets') {
-        raw = tweetsFieldByDay(leaderTweets[id], activeMetric.tweetField);
+      } else if (activeMetric.source === 'dailyDigest') {
+        const series = detail.tweetCountsHistory || [];
+        raw = series.map(h => ({ date: h.date, count: h[activeMetric.dailyField] || 0 }));
       } else raw = [];
 
       raw = filterRange(raw, since, until);

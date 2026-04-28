@@ -241,10 +241,20 @@ async function backfillTweetsForLeader(leader, engagement) {
   const processed = processTweets(allTweets, username, leader.id);
   if (!processed) return;
 
-  // Single canonical bucket per leader (engagement[leaderId]). Drop the
-  // legacy per-year and _alltime mirrors that previously coexisted with
-  // the merged view — keeping both blew engagement.json past GitHub's
-  // 100MB push limit during a full re-fetch.
+  // Aggregates come from the FULL tweet list (correct totals); we only
+  // store top-engagement tweets to keep engagement.json under GitHub's
+  // 100MB push limit. Very prolific accounts (e.g. Milei: ~80K tweets
+  // 2020-now) blew the file otherwise. The daily-count series is
+  // computed from the full list and stored compactly so the
+  // 'Tweets posted Over Time' chart stays accurate.
+  const MAX_STORED_TWEETS = 500;
+  const MAX_RTS_PER_TARGET = 3;
+  const tweetCountsHistory = condenseTweetCountsByDay(processed.tweets);
+  const pruned = pruneRepetitiveRTs(processed.tweets, MAX_RTS_PER_TARGET);
+  const cappedTweets = [...pruned]
+    .sort((a, b) => engagementScore(b) - engagementScore(a))
+    .slice(0, MAX_STORED_TWEETS);
+
   for (const k of Object.keys(engagement)) {
     if (k.startsWith(`${leader.id}_`)) delete engagement[k];
   }
@@ -253,12 +263,63 @@ async function backfillTweetsForLeader(leader, engagement) {
     topRetweeted: processed.topRetweeted,
     topMentioned: processed.topMentioned,
     topHashtags: processed.topHashtags,
-    tweets: processed.tweets,
+    tweets: cappedTweets,
+    tweetCountsHistory,
     since: SINCE,
     until: UNTIL,
     lastUpdated: new Date().toISOString(),
-    tweetCount: processed.tweets.length,
+    fullTweetCount: processed.tweets.length,
+    tweetCount: cappedTweets.length,
   };
+}
+
+function engagementScore(t) {
+  return (t.likes || 0) + (t.rts || 0) * 5 + (t.impressions || 0) / 100;
+}
+
+// Cap repetitive retweets of the same target account to N most engaging
+// before the global tweet cap kicks in. Otherwise prolific RT'ers
+// (Milei is mostly RTs of a small set of accounts) crowd out their own
+// original tweets from the stored 500.
+function pruneRepetitiveRTs(tweets, maxPerTarget) {
+  const nonRT = [];
+  const rtsByTarget = {};
+  for (const t of tweets) {
+    if (t.type !== 'retweet') { nonRT.push(t); continue; }
+    const m = (t.text || '').match(/^RT @(\w+)/i);
+    const key = m ? m[1].toLowerCase() : '__unknown__';
+    (rtsByTarget[key] ||= []).push(t);
+  }
+  const keptRTs = [];
+  for (const key of Object.keys(rtsByTarget)) {
+    const sorted = rtsByTarget[key].sort((a, b) => engagementScore(b) - engagementScore(a));
+    keptRTs.push(...sorted.slice(0, maxPerTarget));
+  }
+  return [...nonRT, ...keptRTs];
+}
+
+// Compact per-day digest of every metric the chart can ask for. Computed
+// from the FULL tweet list so the cap on stored tweets doesn't hurt
+// time-series accuracy for prolific accounts (Milei posts ~80K tweets
+// 2020-now; we only store the top 500 most engaging of those).
+function condenseTweetCountsByDay(tweets) {
+  const byDate = {};
+  for (const t of tweets || []) {
+    if (!t.date) continue;
+    const d = new Date(t.date * 1000).toISOString().slice(0, 10);
+    if (!byDate[d]) {
+      byDate[d] = { date: d, count: 0, likes: 0, rts: 0, impressions: 0, replies: 0, retweetsSent: 0, repliesSent: 0 };
+    }
+    const e = byDate[d];
+    e.count++;
+    e.likes += t.likes || 0;
+    e.rts += t.rts || 0;
+    e.impressions += t.impressions || 0;
+    e.replies += t.replies || 0;
+    if (t.type === 'retweet') e.retweetsSent++;
+    else if (t.type === 'reply') e.repliesSent++;
+  }
+  return Object.values(byDate).sort((a, b) => a.date.localeCompare(b.date));
 }
 
 function shouldRun(phase) {
