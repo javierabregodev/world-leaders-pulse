@@ -39,6 +39,72 @@ function computeTracker(tracker, { since, until }) {
   };
 }
 
+// Tracker snapshots come in monthly cadence (~30-day gaps). To support
+// daily-granular date filtering ("Last 7 days growth", per-day chart),
+// we interpolate between known anchors. Each day inside a gap gets a
+// share of the gap's delta weighted by that day's mention volume — so
+// big news days drive bigger follower jumps, mirroring reality. Days
+// with no mention data fall back to linear (equal share). The boundary
+// snapshots are kept exact; interpolated days are flagged with a flag.
+function enumerateDates(startISO, endISO) {
+  const out = [];
+  const d = new Date(startISO + 'T00:00:00Z');
+  const end = new Date(endISO + 'T00:00:00Z');
+  while (d < end) {
+    out.push(d.toISOString().slice(0, 10));
+    d.setUTCDate(d.getUTCDate() + 1);
+  }
+  return out;
+}
+
+function interpolateTrackerToDaily(tracker, history) {
+  if (!tracker?.snapshots?.length) return tracker;
+  const snaps = [...tracker.snapshots].sort((a, b) => (a.date || '').localeCompare(b.date || ''));
+  if (snaps.length < 2) return tracker;
+
+  const mentionsByDate = {};
+  for (const h of history || []) {
+    if (h.date) mentionsByDate[h.date] = h.count || 0;
+  }
+
+  const FIELDS = ['followers', 'tweets', 'mentionsReceived', 'retweetsReceived', 'lists'];
+  const daily = [];
+
+  for (let i = 0; i < snaps.length - 1; i++) {
+    const s1 = snaps[i];
+    const s2 = snaps[i + 1];
+    if (!s1.date || !s2.date) continue;
+
+    // Anchor day = exact value of s1
+    daily.push({ ...s1, interpolated: false });
+
+    const inner = enumerateDates(s1.date, s2.date).slice(1); // skip s1, exclusive of s2
+    if (inner.length === 0) continue;
+
+    const mentionWeights = inner.map(d => Math.max(0, mentionsByDate[d] || 0));
+    const totalMentions = mentionWeights.reduce((s, v) => s + v, 0);
+    const useMentionWeighting = totalMentions > 0;
+    const weights = useMentionWeighting
+      ? mentionWeights.map(m => m / totalMentions)
+      : inner.map(() => 1 / inner.length);
+
+    const deltas = {};
+    for (const f of FIELDS) deltas[f] = (s2[f] ?? 0) - (s1[f] ?? 0);
+
+    const cum = Object.fromEntries(FIELDS.map(f => [f, 0]));
+    inner.forEach((d, j) => {
+      for (const f of FIELDS) cum[f] += deltas[f] * weights[j];
+      const point = { date: d, following: s1.following, interpolated: true };
+      for (const f of FIELDS) point[f] = Math.round((s1[f] ?? 0) + cum[f]);
+      daily.push(point);
+    });
+  }
+  // Final anchor
+  daily.push({ ...snaps[snaps.length - 1], interpolated: false });
+
+  return { ...tracker, snapshots: daily };
+}
+
 const TWITTER_PIC = (handle) => handle ? `https://unavatar.io/x/${handle.replace('@', '')}` : null;
 const FLAG_URL = (code) => `https://flagcdn.com/48x36/${code.toLowerCase()}.png`;
 
@@ -172,10 +238,12 @@ const CHART_VIEWS = [
 ];
 
 // Available metrics for the over-time chart. 'mentions' comes from the
-// mention-counts history; the rest are aggregated from the leader's own
-// tweets (so they're only meaningful for leaders with a handle).
+// mention-counts history. Engagement metrics aggregate the leader's own
+// tweets. Follower metrics read the (now daily-interpolated) tracker
+// snapshots — these are point-in-time, so they always render as daily.
 const CHART_METRICS = [
   { key: 'mentions', label: 'Mentions', source: 'history', color: '#6366f1' },
+  { key: 'followers', label: 'Followers', source: 'tracker', trackerField: 'followers', color: '#a855f7' },
   { key: 'likes', label: 'Likes', source: 'tweets', tweetField: 'likes', color: '#ec4899' },
   { key: 'rts', label: 'Retweets', source: 'tweets', tweetField: 'rts', color: '#3b82f6' },
   { key: 'impressions', label: 'Impressions', source: 'tweets', tweetField: 'impressions', color: '#06b6d4' },
@@ -192,6 +260,17 @@ function tweetsToDailySeries(tweets, field) {
   return Object.entries(byDate)
     .sort(([a], [b]) => a.localeCompare(b))
     .map(([date, count]) => ({ date, count }));
+}
+
+function trackerToDailySeries(snapshots, field) {
+  return (snapshots || [])
+    .filter(s => s.date != null && s[field] != null)
+    .sort((a, b) => a.date.localeCompare(b.date))
+    .map(s => ({ date: s.date, count: s[field] }));
+}
+
+function filterByPeriod(series, since, until) {
+  return (series || []).filter(p => (!since || p.date >= since) && (!until || p.date <= until));
 }
 
 export default function LeaderPage({ leaderId, onBack, onSelectLeader }) {
@@ -252,7 +331,15 @@ export default function LeaderPage({ leaderId, onBack, onSelectLeader }) {
     topMentioned: serverData.topMentioned ?? [],
     topHashtags: serverData.topHashtags ?? [],
     tweets: serverData.tweets ?? [],
-    tracker: computeTracker(serverData.tracker, periodToDates(period)),
+    tracker: computeTracker(
+      interpolateTrackerToDaily(
+        serverData.tracker,
+        // History is what we use to weight the interpolation (high-mention
+        // days take a bigger share of follower growth in their month).
+        serverData.timeline ? timelineToDaily(serverData.timeline) : (serverData.history ?? [])
+      ),
+      periodToDates(period)
+    ),
     history: serverData.timeline
       ? timelineToDaily(serverData.timeline)
       : serverData.history ?? [],
@@ -267,19 +354,36 @@ export default function LeaderPage({ leaderId, onBack, onSelectLeader }) {
   const history = leader.history || [];
   const activeMetric = CHART_METRICS.find(m => m.key === metric) || CHART_METRICS[0];
 
-  // Pick source series for the chosen metric: mentions history vs.
-  // per-tweet aggregation by date. Leaders with no handle only get mentions.
-  const sourceSeries = activeMetric.source === 'history'
-    ? history.map(h => ({ date: h.date, count: h.count }))
-    : tweetsToDailySeries(leader.tweets, activeMetric.tweetField);
+  // Pick source series for the chosen metric.
+  let sourceSeries;
+  if (activeMetric.source === 'history') {
+    sourceSeries = history.map(h => ({ date: h.date, count: h.count }));
+  } else if (activeMetric.source === 'tracker') {
+    sourceSeries = trackerToDailySeries(leader.tracker?.snapshots, activeMetric.trackerField);
+    // Tracker is point-in-time, scope to the selected period directly so
+    // the chart matches the date filter even though it skips aggregation.
+    const { since, until } = periodToDates(period);
+    sourceSeries = filterByPeriod(sourceSeries, since, until);
+  } else {
+    sourceSeries = tweetsToDailySeries(leader.tweets, activeMetric.tweetField);
+  }
+
+  // Tracker series (followers, etc.) are cumulative point-in-time — summing
+  // them across months/quarters would double-count, so we always display
+  // them as the raw daily series and hide the view toggle.
+  const isCumulativeMetric = activeMetric.source === 'tracker';
 
   let chartData;
-  switch (view) {
-    case 'daily': chartData = sourceSeries.map(h => ({ date: h.date, value: h.count })); break;
-    case 'monthly': chartData = aggregateByMonth(sourceSeries).map(p => ({ date: p.date, value: p.mentions })); break;
-    case 'quarterly': chartData = aggregateByQuarter(sourceSeries).map(p => ({ date: p.date, value: p.mentions })); break;
-    case 'yearly': chartData = aggregateByYear(sourceSeries).map(p => ({ date: p.date, value: p.mentions })); break;
-    default: chartData = sourceSeries.map(h => ({ date: h.date, value: h.count }));
+  if (isCumulativeMetric) {
+    chartData = sourceSeries.map(h => ({ date: h.date, value: h.count }));
+  } else {
+    switch (view) {
+      case 'daily': chartData = sourceSeries.map(h => ({ date: h.date, value: h.count })); break;
+      case 'monthly': chartData = aggregateByMonth(sourceSeries).map(p => ({ date: p.date, value: p.mentions })); break;
+      case 'quarterly': chartData = aggregateByQuarter(sourceSeries).map(p => ({ date: p.date, value: p.mentions })); break;
+      case 'yearly': chartData = aggregateByYear(sourceSeries).map(p => ({ date: p.date, value: p.mentions })); break;
+      default: chartData = sourceSeries.map(h => ({ date: h.date, value: h.count }));
+    }
   }
 
   const pic = TWITTER_PIC(leader.handle);
@@ -469,19 +573,26 @@ export default function LeaderPage({ leaderId, onBack, onSelectLeader }) {
               <div>
                 <h2 className="text-sm font-semibold text-gray-900">{activeMetric.label} Over Time</h2>
                 <p className="text-[11px] text-gray-400 mt-0.5">
-                  {activeMetric.source === 'tweets' ? `Aggregated from ${leader.name.split(' ')[0]}'s own tweets` : 'Mentions across X/Twitter'}
+                  {activeMetric.source === 'tweets'
+                    ? `Aggregated from ${leader.name.split(' ')[0]}'s own tweets`
+                    : activeMetric.source === 'tracker'
+                      ? 'Daily follower count, interpolated from monthly snapshots and weighted by mention volume'
+                      : 'Mentions across X/Twitter'}
                 </p>
               </div>
-              <div className="flex gap-0.5 bg-gray-100 rounded-lg p-0.5">
-                {CHART_VIEWS.map(v => (
-                  <button key={v.key} onClick={() => setView(v.key)}
-                    className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
-                      view === v.key ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'
-                    }`}>
-                    {v.label}
-                  </button>
-                ))}
-              </div>
+              {/* View toggle doesn't apply to cumulative tracker series */}
+              {!isCumulativeMetric && (
+                <div className="flex gap-0.5 bg-gray-100 rounded-lg p-0.5">
+                  {CHART_VIEWS.map(v => (
+                    <button key={v.key} onClick={() => setView(v.key)}
+                      className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
+                        view === v.key ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'
+                      }`}>
+                      {v.label}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* Metric selector — hidden for leaders with no handle (no tweet data) */}
