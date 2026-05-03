@@ -100,17 +100,61 @@ function main() {
   const trackers = readJSON(path.join(DATA_DIR, 'trackers.json'));
   const rtsReceived = readJSON(path.join(DATA_DIR, 'rts-received.json'));
 
-  // 1) INDEX: per-preset precomputed summaries
+  // 1) INDEX: per-preset precomputed summaries.
+  //    Fixed presets + one preset per year and per month covering the data
+  //    range — lets the client pick a year/month from the date picker without
+  //    re-aggregating client-side. The per-month presets dominate size but
+  //    each entry is small (one number per metric per leader).
   const presets = ['today', 'yesterday', '7d', '30d', '365d', 'all'];
+
+  // Range for year/month presets: from the earliest date present in history
+  // or engagement digest, to today.
+  const todayStr = new Date().toISOString().slice(0, 10);
+  let earliestDate = todayStr;
+  for (const id of Object.keys(history)) {
+    const d = history[id]?.[0]?.date;
+    if (d && d < earliestDate) earliestDate = d;
+  }
+  for (const id of Object.keys(engagement)) {
+    const d = engagement[id]?.tweetCountsHistory?.[0]?.date;
+    if (d && d < earliestDate) earliestDate = d;
+  }
+  const startYear = parseInt(earliestDate.slice(0, 4), 10);
+  const endYear = parseInt(todayStr.slice(0, 4), 10);
+  const endMonth = parseInt(todayStr.slice(5, 7), 10);
+
+  for (let y = startYear; y <= endYear; y++) {
+    presets.push(`year-${y}`);
+    for (let m = 1; m <= 12; m++) {
+      // skip future months in the current year
+      if (y === endYear && m > endMonth) break;
+      presets.push(`month-${y}-${String(m).padStart(2, '0')}`);
+    }
+  }
+
+  function presetToDates(preset) {
+    if (preset.startsWith('year-')) {
+      const y = preset.slice(5);
+      return { since: `${y}-01-01`, until: `${y}-12-31` };
+    }
+    if (preset.startsWith('month-')) {
+      const [y, m] = preset.slice(6).split('-');
+      const lastDay = new Date(parseInt(y, 10), parseInt(m, 10), 0).getDate();
+      return { since: `${y}-${m}-01`, until: `${y}-${m}-${lastDay}` };
+    }
+    return periodToDates(preset);
+  }
+
   const index = {
     _meta: {
       lastMentionsUpdate: counts._lastGlobalUpdate || null,
       lastTrackersUpdate: trackers._lastGlobalUpdate || null,
       buildAt: new Date().toISOString(),
+      presets: presets.length,
     },
   };
   for (const period of presets) {
-    const { since, until } = periodToDates(period);
+    const { since, until } = presetToDates(period);
     index[period] = leaders.map(l => {
       const agg = period === 'all'
         ? { totalMentions: counts[l.id]?.total ?? null, engagement: engagement[l.id]?.engagement ?? null }

@@ -68,15 +68,24 @@ export default function Dashboard({ onSelectLeader }) {
       .catch(() => {});
   }, []);
 
-  // Pick the right preset based on current period
+  // Pick the right preset based on current period. Month/year selections
+  // map to per-year / per-month presets that build-static precomputes,
+  // so the home aggregates honour the date picker without client-side work.
   useEffect(() => {
     if (!indexData) return;
-    const key = typeof period === 'string' ? period : null;
+    let key = null;
+    if (typeof period === 'string') {
+      key = period;
+    } else if (period?.type === 'year') {
+      key = `year-${period.year}`;
+    } else if (period?.type === 'month') {
+      key = `month-${period.year}-${String(period.month).padStart(2, '0')}`;
+    }
     if (key && indexData[key]) {
       setLeaders(indexData[key]);
     } else {
-      // Month/year selector: filter 'all' by date client-side from history
-      // For now, default to '365d' for month/year (precomputed aggregates unavailable)
+      // Fallback: 'all' lifetime totals when the period is missing or
+      // outside the precomputed range.
       setLeaders(indexData['all'] || []);
     }
   }, [indexData, period]);

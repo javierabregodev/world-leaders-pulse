@@ -316,10 +316,13 @@ export default function LeaderPage({ leaderId, onBack, onSelectLeader }) {
     tweetCountsHistory: serverData.tweetCountsHistory ?? [],
   } : (mockLeader || { id: leaderId, name: '', country: '', countryCode: '', handle: null });
 
-  // Pull the right preset out of index.json for ranking. Custom month/year
-  // periods don't have a precomputed preset, so fall back to 'all'.
-  const presetKey = typeof period === 'string' ? period : 'all';
-  const presetLeaders = indexData?.[presetKey] || indexData?.all || [];
+  // Pull the right preset out of index.json for ranking. Month/year
+  // selections map to per-year / per-month presets in build-static.
+  let presetKey = null;
+  if (typeof period === 'string') presetKey = period;
+  else if (period?.type === 'year') presetKey = `year-${period.year}`;
+  else if (period?.type === 'month') presetKey = `month-${period.year}-${String(period.month).padStart(2, '0')}`;
+  const presetLeaders = (presetKey && indexData?.[presetKey]) || indexData?.all || [];
   const ranks = computeRanks(presetLeaders, leaderId);
 
   const history = leader.history || [];
