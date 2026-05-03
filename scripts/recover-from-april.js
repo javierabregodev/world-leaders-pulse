@@ -2,7 +2,7 @@
  * One-off recovery: re-fetch historical mention counts from 2026-04-01 onwards
  * for every leader and overwrite the corresponding entries in history.json.
  *
- * Use case: the previous fetch-mentions cron stored sub-daily timeline buckets
+ * Use case: the previous fetch-twitter-data cron stored sub-daily timeline buckets
  * directly into history without aggregating, deflating daily counts ~30x for
  * dates from 2026-04-08 onwards. This script repairs that range using the
  * historical (full-archive) endpoint, which gives stable per-day counts.

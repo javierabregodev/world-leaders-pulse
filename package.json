@@ -8,7 +8,7 @@
     "dev:client": "npm run build-static && vite",
     "build": "npm run build-static && vite build",
     "build-static": "node scripts/build-static.js",
-    "fetch-mentions": "node scripts/fetch-mentions.js",
+    "fetch-twitter-data": "node scripts/fetch-twitter-data.js",
     "fetch-trackers": "node scripts/fetch-trackers.js"
   },
   "dependencies": {

@@ -197,7 +197,7 @@ export default function Dashboard({ onSelectLeader }) {
 // Data freshness indicator with cadence tooltip
 // ----------------------------------------------------------------
 
-// Cron schedule mirrors .github/workflows/fetch-mentions.yml + fetch-trackers.yml.
+// Cron schedule mirrors .github/workflows/fetch-twitter-data.yml + fetch-trackers.yml.
 // Mentions + tweets + RTs received: every 12h at 00:00 and 12:00 UTC.
 // Tracker snapshots: daily at 03:00 UTC.
 const MENTIONS_CRON_HOURS_UTC = [0, 12];

@@ -1,8 +1,10 @@
 /**
- * Fetch 7-day mentions count + 7-day engagement reports for all leaders.
- * Updates server/data/{counts,history,engagement}.json
- *
- * Designed to run in GitHub Actions every 6h.
+ * 12h cron: pulls all per-leader Twitter data Tweet Binder gives us.
+ * Per leader, runs three 7-day reports:
+ *   1. mentions count    — query: (name OR @handle) -is:retweet
+ *   2. own tweets+stats  — query: from:handle
+ *   3. RTs received      — query: (retweets_of:handle)
+ * Updates server/data/{counts,history,engagement,rts-received}.json.
  */
 import 'dotenv/config';
 import fs from 'fs';
@@ -341,7 +343,7 @@ async function main() {
 
   counts._lastGlobalUpdate = new Date().toISOString();
   saveJSON(COUNTS_FILE, counts);
-  console.log('\n[fetch-mentions] Done.');
+  console.log('\n[fetch-twitter-data] Done.');
 }
 
 main().catch(err => { console.error(err); process.exit(1); });

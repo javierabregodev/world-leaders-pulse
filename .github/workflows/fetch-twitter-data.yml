@@ -1,9 +1,9 @@
-name: Fetch Mentions (every 12h)
+name: Fetch Twitter Data (daily)
 
 on:
   schedule:
-    # Twice a day at 00:00 and 12:00 UTC to stay within GitHub Actions quota
-    - cron: '0 0,12 * * *'
+    # Daily at 12:00 UTC (one run/day to stay under Tweet Binder credit budget)
+    - cron: '0 12 * * *'
   workflow_dispatch: # allow manual trigger
 
 concurrency:
@@ -27,11 +27,11 @@ jobs:
 
       - run: npm ci
 
-      - name: Fetch 7-day mentions + engagement
+      - name: Fetch 7-day mentions + tweets + RTs received
         env:
           TWEETBINDER_API_KEY: ${{ secrets.TWEETBINDER_API_KEY }}
           TWEETBINDER_API_URL: ${{ secrets.TWEETBINDER_API_URL }}
-        run: npm run fetch-mentions
+        run: npm run fetch-twitter-data
 
       - name: Rebuild static JSON
         run: npm run build-static
@@ -42,7 +42,7 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add server/data public/api
           if ! git diff --cached --quiet; then
-            git commit -m "data: 7-day mentions + engagement update"
+            git commit -m "data: 7-day twitter data update"
             # Rebase onto any commits that landed on main while this job ran
             # (manual pushes, the trackers workflow, etc.) to avoid push races.
             for i in 1 2 3; do

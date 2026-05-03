@@ -1,13 +1,13 @@
 # World Leaders Pulse
 
-Dashboard that tracks Twitter/X mentions and engagement for 31 world leaders, powered by the Tweet Binder API.
+Dashboard that tracks Twitter/X mentions and engagement for 32 world leaders, powered by the Tweet Binder API.
 
 ## Architecture
 
 - **Frontend**: React + Vite, static SPA deployed to Vercel
 - **Data**: JSON files in `server/data/` committed to the repo + precomputed static endpoints in `public/api/`
 - **Crons**: GitHub Actions fetch fresh data and commit updates
-  - `fetch-mentions.yml` — twice a day (00:00 + 12:00 UTC): 7-day mention counts + engagement reports
+  - `fetch-twitter-data.yml` — twice a day (00:00 + 12:00 UTC): 7-day mentions + own tweets + RTs received
   - `fetch-trackers.yml` — daily at 03:00 UTC: user-tracker snapshots (followers, account stats)
 
 ## Local development
@@ -37,7 +37,7 @@ public/api/
 
 ## Scripts
 
-- `npm run fetch-mentions` — runs the 7-day update (locally or in Actions)
+- `npm run fetch-twitter-data` — runs the 7-day mentions + tweets + RTs-received update (locally or in Actions)
 - `npm run fetch-trackers` — runs the user-tracker snapshot fetch
 - `npm run build-static` — rebuilds `public/api/*.json` from `server/data/*`
 - `npm run build` — full Vite build + static regeneration

@@ -13,36 +13,61 @@ export function filterLeader(leader, since, until) {
   if (until) filteredHistory = filteredHistory.filter(h => h.date <= until);
   const filteredMentions = filteredHistory.reduce((sum, h) => sum + (h.count || 0), 0);
 
-  // If no tweets data, just return mentions filtered
+  // Engagement totals come from tweetCountsHistory (full pre-cap digest).
+  // Filtering leader.tweets directly would underreport prolific accounts —
+  // that array is capped to the top 500 most-engaging tweets, so for someone
+  // posting ~7K/30d only ~6% of the volume remains in any period filter.
+  const digest = leader.tweetCountsHistory || [];
+  let filteredDigest = digest;
+  if (since) filteredDigest = filteredDigest.filter(d => d.date >= since);
+  if (until) filteredDigest = filteredDigest.filter(d => d.date <= until);
+
+  let digestEngagement = null;
+  if (filteredDigest.length > 0) {
+    let totalLikes = 0, totalRTs = 0, totalImpressions = 0, totalReplies = 0;
+    let tp = 0, rtsSent = 0, repliesSent = 0;
+    for (const d of filteredDigest) {
+      totalLikes += d.likes || 0;
+      totalRTs += d.rts || 0;
+      totalImpressions += d.impressions || 0;
+      totalReplies += d.replies || 0;
+      tp += d.count || 0;
+      rtsSent += d.retweetsSent || 0;
+      repliesSent += d.repliesSent || 0;
+    }
+    const originals = Math.max(0, tp - rtsSent - repliesSent);
+    digestEngagement = {
+      totalLikes, totalRTs, totalImpressions, totalReplies, totalQuotes: 0, totalBookmarks: 0,
+      engagementRate: totalImpressions > 0
+        ? +((totalLikes + totalRTs + totalReplies) / totalImpressions * 100).toFixed(2)
+        : 0,
+      tweetsPosted: tp, originalTweets: originals, retweetsSent: rtsSent, repliesSent,
+      avgLikesPerTweet: tp > 0 ? Math.round(totalLikes / tp) : 0,
+      avgRTsPerTweet: tp > 0 ? Math.round(totalRTs / tp) : 0,
+    };
+  }
+
+  // top* lists are derived from the stored tweet array (capped 500). They're
+  // approximate for prolific accounts, but it's the only signal we have for
+  // who got RT'd / mentioned / hashtagged most without keeping every tweet.
   const allTweets = leader.tweets || [];
-  let engagement = leader.engagement;
   let topRetweeted = leader.topRetweeted || [];
   let topMentioned = leader.topMentioned || [];
   let topHashtags = leader.topHashtags || [];
+  let filteredTweets = allTweets;
 
   if (allTweets.length > 0) {
     const sinceTs = since ? new Date(since).getTime() / 1000 : 0;
     const untilTs = until ? new Date(until + 'T23:59:59').getTime() / 1000 : Infinity;
-    const filteredTweets = allTweets.filter(t => (t.date || 0) >= sinceTs && (t.date || 0) <= untilTs);
+    filteredTweets = allTweets.filter(t => (t.date || 0) >= sinceTs && (t.date || 0) <= untilTs);
 
     if (filteredTweets.length > 0) {
-      // Recompute engagement
-      let totalLikes = 0, totalRTs = 0, totalImpressions = 0, totalReplies = 0;
-      let originals = 0, rtsSent = 0, repliesSent = 0;
       const rtCounts = {}, mentionCounts = {}, hashCounts = {};
-
       for (const t of filteredTweets) {
-        totalLikes += t.likes || 0;
-        totalRTs += t.rts || 0;
-        totalImpressions += t.impressions || 0;
-        totalReplies += t.replies || 0;
-        if (t.type === 'original') originals++;
-        else if (t.type === 'retweet') {
-          rtsSent++;
+        if (t.type === 'retweet') {
           const m = (t.text || '').match(/^RT @(\w+)/i);
           if (m) { const h = m[1].toLowerCase(); rtCounts[h] = (rtCounts[h] || 0) + 1; }
-        } else if (t.type === 'reply') repliesSent++;
-
+        }
         if (t.type !== 'retweet' && t.relatedHandles) {
           const counted = new Set();
           for (const h of t.relatedHandles) {
@@ -53,18 +78,6 @@ export function filterLeader(leader, since, until) {
           hashCounts[tag.toLowerCase()] = (hashCounts[tag.toLowerCase()] || 0) + 1;
         }
       }
-
-      const tp = filteredTweets.length;
-      engagement = {
-        totalLikes, totalRTs, totalImpressions, totalReplies, totalQuotes: 0, totalBookmarks: 0,
-        engagementRate: totalImpressions > 0
-          ? +((totalLikes + totalRTs + totalReplies) / totalImpressions * 100).toFixed(2)
-          : 0,
-        tweetsPosted: tp, originalTweets: originals, retweetsSent: rtsSent, repliesSent,
-        avgLikesPerTweet: tp > 0 ? Math.round(totalLikes / tp) : 0,
-        avgRTsPerTweet: tp > 0 ? Math.round(totalRTs / tp) : 0,
-      };
-
       topRetweeted = Object.entries(rtCounts)
         .map(([h, c]) => ({ handle: '@' + h, name: h, count: c }))
         .sort((a, b) => b.count - a.count).slice(0, 10);
@@ -75,28 +88,24 @@ export function filterLeader(leader, since, until) {
         .map(([t, c]) => ({ tag: t, count: c }))
         .sort((a, b) => b.count - a.count).slice(0, 15);
     } else {
-      // No tweets in the selected window → reset all derived top lists.
-      // Without this, last-fetch's top accounts/hashtags would leak into
-      // periods where the leader didn't post anything.
-      engagement = null;
+      // No engaging tweets in the period → drop the top lists so previous
+      // periods' top accounts/hashtags don't leak through.
       topRetweeted = [];
       topMentioned = [];
       topHashtags = [];
     }
-
-    return {
-      ...leader,
-      totalMentions: filteredMentions,
-      history: filteredHistory,
-      engagement,
-      topRetweeted,
-      topMentioned,
-      topHashtags,
-      tweets: filteredTweets,
-    };
   }
 
-  return { ...leader, totalMentions: filteredMentions, history: filteredHistory };
+  return {
+    ...leader,
+    totalMentions: filteredMentions,
+    history: filteredHistory,
+    engagement: digestEngagement,
+    topRetweeted,
+    topMentioned,
+    topHashtags,
+    tweets: filteredTweets,
+  };
 }
 
 /** Enrich topRetweeted/topMentioned with leader info (merges from leaders list) */

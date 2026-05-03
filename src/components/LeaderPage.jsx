@@ -493,13 +493,6 @@ export default function LeaderPage({ leaderId, onBack, onSelectLeader }) {
                 icon="📝"
                 rank={ranks.tweetsLifetime}
               />
-              <TrackerStat
-                label="Mentions received"
-                value={leader.tracker?.mentionsReceivedTotal != null ? formatCompact(leader.tracker.mentionsReceivedTotal) : '—'}
-                growth={leader.tracker?.growth?.mentionsReceived}
-                icon="📥"
-                rank={ranks.mentionsReceived}
-              />
             </div>
           </div>
         )}

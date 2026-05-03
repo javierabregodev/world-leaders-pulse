@@ -2,7 +2,7 @@
  * One-off cleanup: dedupe duplicated tweets that accumulated in
  * server/data/engagement.json across cron runs.
  *
- * Each fetch-mentions run concatenated `older[].tweets` + `7-day API
+ * Each fetch-twitter-data run concatenated `older[].tweets` + `7-day API
  * tweets`; near the 7-day boundary, one tweet could end up in both
  * arrays, leaving 2 copies in the bucket. Subsequent runs read the
  * already-duplicated bucket and (when the tweet still hovered around

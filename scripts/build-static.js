@@ -36,24 +36,32 @@ function aggregate(leaderId, history, engagement, since, until) {
   if (until) filteredHist = filteredHist.filter(h => h.date <= until);
   const mentions = filteredHist.reduce((s, h) => s + (h.count || 0), 0);
 
-  // Engagement from tweets
-  const tweets = engagement[leaderId]?.tweets || [];
-  const sinceTs = since ? new Date(since).getTime() / 1000 : 0;
-  const untilTs = until ? new Date(until + 'T23:59:59').getTime() / 1000 : Infinity;
-  const filtered = tweets.filter(t => (t.date || 0) >= sinceTs && (t.date || 0) <= untilTs);
+  // Engagement aggregates: sum from tweetCountsHistory (per-day digest
+  // computed from the FULL tweet list before the 500-tweet storage cap).
+  // Using engagement.tweets here would underreport prolific accounts —
+  // e.g. Milei posts ~7K tweets in 30d but only the top 500 by engagement
+  // are stored, so any period filter against that array misses ~93%.
+  const digest = engagement[leaderId]?.tweetCountsHistory ?? [];
+  let filteredDigest = digest;
+  if (since) filteredDigest = filteredDigest.filter(d => d.date >= since);
+  if (until) filteredDigest = filteredDigest.filter(d => d.date <= until);
 
-  if (filtered.length === 0) return { totalMentions: mentions, engagement: null };
+  if (filteredDigest.length === 0) return { totalMentions: mentions, engagement: null };
 
   let totalLikes = 0, totalRTs = 0, totalImpressions = 0, totalReplies = 0;
-  let originals = 0, rtsSent = 0, repliesSent = 0;
-  for (const t of filtered) {
-    totalLikes += t.likes || 0; totalRTs += t.rts || 0;
-    totalImpressions += t.impressions || 0; totalReplies += t.replies || 0;
-    if (t.type === 'original') originals++;
-    else if (t.type === 'retweet') rtsSent++;
-    else if (t.type === 'reply') repliesSent++;
+  let tp = 0, rtsSent = 0, repliesSent = 0;
+  for (const d of filteredDigest) {
+    totalLikes += d.likes || 0;
+    totalRTs += d.rts || 0;
+    totalImpressions += d.impressions || 0;
+    totalReplies += d.replies || 0;
+    tp += d.count || 0;
+    rtsSent += d.retweetsSent || 0;
+    repliesSent += d.repliesSent || 0;
   }
-  const tp = filtered.length;
+  // Originals aren't stored in the digest but are derivable: any tweet
+  // that's not a retweet-sent and not a reply-sent is an original.
+  const originals = Math.max(0, tp - rtsSent - repliesSent);
   return {
     totalMentions: mentions,
     engagement: {
