@@ -154,7 +154,7 @@
     "lastUpdated": "2026-05-03T14:57:32.741Z",
     "last7d": 104624
   },
-  "_lastGlobalUpdate": "2026-05-03T15:00:21.979Z",
+  "_lastGlobalUpdate": "2026-05-03T18:07:25.647Z",
   "modi_mentions_2025": {
     "total": 16881106,
     "year": 2025,
@@ -466,7 +466,14 @@
     "fetchedAt": "2026-04-27T21:40:36.634Z"
   },
   "jmilei": {
-    "last7d": 250776,
-    "lastUpdated": "2026-05-03T14:58:15.253Z"
+    "total": 67031619,
+    "last7d": 274489,
+    "lastUpdated": "2026-05-03T17:06:20.363Z"
+  },
+  "jmilei_mentions_alltime": {
+    "total": 67031619,
+    "since": "2020-01-01",
+    "until": null,
+    "fetchedAt": "2026-05-03T17:06:20.363Z"
   }
 }
