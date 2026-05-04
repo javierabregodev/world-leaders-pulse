@@ -177,7 +177,7 @@ export default function Dashboard({ onSelectLeader }) {
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 py-5">
         <div className="mb-5">
-          <SearchDropdown onSelect={onSelectLeader} />
+          <SearchDropdown onSelect={onSelectLeader} leaders={tableLeaders} />
         </div>
 
         <div className="mb-5">

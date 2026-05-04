@@ -3,7 +3,6 @@ import {
   AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
 } from 'recharts';
 import { LEADER_COLORS, getLeaderColor } from '../mockData';
-import MOCK_LEADERS from '../mockData';
 import { interpolateTrackerToDaily } from '../lib/interpolate';
 
 const ALL_COLORS = [
@@ -148,7 +147,23 @@ export default function ComparisonChart({ period }) {
   const [addSearch, setAddSearch] = useState('');
   const [leaderDetails, setLeaderDetails] = useState({}); // id → leader json
   const [leaderTweets, setLeaderTweets] = useState({});   // id → tweets[] (lazy)
+  // Source of truth for the searchable list — pulled from index.json so
+  // recently added leaders (e.g. Milei) show up without code changes.
+  // mockData.js was the legacy source and is hand-curated to ~21 leaders.
+  const [allLeaders, setAllLeaders] = useState([]);
   const addRef = useRef(null);
+
+  useEffect(() => {
+    fetch('/api/index.json')
+      .then(r => r.ok ? r.json() : null)
+      .then(data => {
+        if (!data?.all) return;
+        setAllLeaders(data.all.map(l => ({
+          id: l.id, name: l.name, country: l.country, countryCode: l.countryCode, handle: l.handle,
+        })));
+      })
+      .catch(() => {});
+  }, []);
 
   const activeMetric = CHART_METRICS.find(m => m.key === metric) || CHART_METRICS[0];
   // dailyDigest reads from leader.tweetCountsHistory (already in the
@@ -240,7 +255,7 @@ export default function ComparisonChart({ period }) {
     if (selectedIds.length > 1) setSelectedIds(prev => prev.filter(x => x !== id));
   }
 
-  const availableToAdd = MOCK_LEADERS.filter(l => !selectedIds.includes(l.id));
+  const availableToAdd = allLeaders.filter(l => !selectedIds.includes(l.id));
   const filteredAdd = addSearch.length >= 1
     ? availableToAdd.filter(l => l.name.toLowerCase().includes(addSearch.toLowerCase()) || l.country.toLowerCase().includes(addSearch.toLowerCase()))
     : availableToAdd;
@@ -273,7 +288,7 @@ export default function ComparisonChart({ period }) {
 
       <div className="flex flex-wrap items-center gap-1.5 mb-3">
         {selectedIds.map((id, i) => {
-          const leader = MOCK_LEADERS.find(l => l.id === id) || leaderDetails[id];
+          const leader = allLeaders.find(l => l.id === id) || leaderDetails[id];
           if (!leader) return null;
           const color = getColorForLeader(id, i);
           const pic = TWITTER_PIC(leader.handle);
@@ -361,7 +376,7 @@ export default function ComparisonChart({ period }) {
               boxShadow: '0 4px 12px rgba(0,0,0,0.08)', fontSize: '12px',
             }}
             formatter={(val, name) => {
-              const leader = MOCK_LEADERS.find(l => l.id === name) || leaderDetails[name];
+              const leader = allLeaders.find(l => l.id === name) || leaderDetails[name];
               return [formatCompact(val), leader?.name?.split(' ').pop() || name];
             }}
           />

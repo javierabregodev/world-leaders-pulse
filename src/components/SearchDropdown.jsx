@@ -1,22 +1,29 @@
 import { useState, useRef, useEffect } from 'react';
-import { searchLeaders } from '../mockData';
 
 const FLAG_URL = (code) => `https://flagcdn.com/20x15/${code.toLowerCase()}.png`;
 const TWITTER_PIC = (handle) => handle ? `https://unavatar.io/x/${handle.replace('@', '')}` : null;
 
-function formatCompact(n) {
-  if (n >= 1_000_000) return (n / 1_000_000).toFixed(1) + 'M';
-  if (n >= 1_000) return (n / 1_000).toFixed(1) + 'K';
-  return n.toLocaleString();
+// Search by name, country or handle (case-insensitive). Match anywhere
+// inside any of the three so users can find by surname or partial handle.
+function searchLeaders(leaders, query) {
+  if (!query || query.length < 1) return [];
+  const q = query.toLowerCase();
+  return (leaders || [])
+    .filter(l =>
+      l.name?.toLowerCase().includes(q) ||
+      l.country?.toLowerCase().includes(q) ||
+      l.handle?.toLowerCase().includes(q)
+    )
+    .slice(0, 10);
 }
 
-export default function SearchDropdown({ onSelect }) {
+export default function SearchDropdown({ onSelect, leaders }) {
   const [query, setQuery] = useState('');
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
 
-  const results = searchLeaders(query);
-  const showResults = open && query.length >= 3 && results.length > 0;
+  const results = searchLeaders(leaders, query);
+  const showResults = open && query.length >= 1 && results.length > 0;
 
   useEffect(() => {
     const close = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
@@ -63,6 +70,7 @@ export default function SearchDropdown({ onSelect }) {
         <div className="absolute top-full mt-1.5 left-0 right-0 bg-white rounded-xl border border-gray-200 shadow-xl z-30 overflow-hidden">
           {results.map((leader) => {
             const pic = TWITTER_PIC(leader.handle);
+            const hasChange = typeof leader.change === 'number';
             const isUp = leader.change >= 0;
             return (
               <div
@@ -95,17 +103,19 @@ export default function SearchDropdown({ onSelect }) {
                   <img src={FLAG_URL(leader.countryCode)} alt="" className="w-5 h-4 rounded-sm object-cover flex-shrink-0" />
                 )}
 
-                {/* Trend */}
-                <span className={`text-xs font-semibold flex-shrink-0 ${isUp ? 'text-emerald-600' : 'text-red-500'}`}>
-                  {isUp ? '↑' : '↓'}{Math.abs(leader.change).toFixed(0)}%
-                </span>
+                {/* Trend (hidden when not available — index.json doesn't carry it yet) */}
+                {hasChange && (
+                  <span className={`text-xs font-semibold flex-shrink-0 ${isUp ? 'text-emerald-600' : 'text-red-500'}`}>
+                    {isUp ? '↑' : '↓'}{Math.abs(leader.change).toFixed(0)}%
+                  </span>
+                )}
               </div>
             );
           })}
         </div>
       )}
 
-      {open && query.length >= 3 && results.length === 0 && (
+      {open && query.length >= 1 && results.length === 0 && (
         <div className="absolute top-full mt-1.5 left-0 right-0 bg-white rounded-xl border border-gray-200 shadow-xl z-30 p-4 text-center text-sm text-gray-400">
           No leaders found for "{query}"
         </div>
