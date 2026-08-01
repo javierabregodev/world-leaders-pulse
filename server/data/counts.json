@@ -1,160 +1,160 @@
 {
   "modi": {
     "total": 138788515,
-    "lastUpdated": "2026-07-31T14:13:22.164Z",
-    "last7d": 374085
+    "lastUpdated": "2026-08-01T13:26:55.524Z",
+    "last7d": 359905
   },
   "xi": {
     "total": 3518770,
-    "lastUpdated": "2026-07-31T14:19:38.363Z",
-    "last7d": 7389
+    "lastUpdated": "2026-08-01T13:33:03.286Z",
+    "last7d": 7065
   },
   "trump": {
     "total": 1068956656,
-    "lastUpdated": "2026-07-31T14:19:52.004Z",
-    "last7d": 2141018
+    "lastUpdated": "2026-08-01T13:33:16.582Z",
+    "last7d": 2134178
   },
   "prabowo": {
     "total": 13360064,
-    "lastUpdated": "2026-07-31T14:20:33.852Z",
-    "last7d": 23937
+    "lastUpdated": "2026-08-01T13:33:56.737Z",
+    "last7d": 23764
   },
   "sharif": {
     "total": 8396113,
-    "lastUpdated": "2026-07-31T14:20:58.865Z",
-    "last7d": 9965
+    "lastUpdated": "2026-08-01T13:34:20.987Z",
+    "last7d": 0
   },
   "tinubu": {
     "total": 23656021,
-    "lastUpdated": "2026-07-31T14:22:37.827Z",
-    "last7d": 96123
+    "lastUpdated": "2026-08-01T13:35:57.404Z",
+    "last7d": 99153
   },
   "lula": {
     "total": 115225595,
-    "lastUpdated": "2026-07-31T14:23:35.991Z",
-    "last7d": 332477
+    "lastUpdated": "2026-08-01T13:36:54.356Z",
+    "last7d": 0
   },
   "rahman": {
     "total": 108484,
-    "lastUpdated": "2026-07-31T14:25:00.295Z",
-    "last7d": 733
+    "lastUpdated": "2026-08-01T13:38:21.681Z",
+    "last7d": 690
   },
   "putin": {
     "total": 104526286,
-    "lastUpdated": "2026-07-31T14:25:25.061Z",
-    "last7d": 128338
+    "lastUpdated": "2026-08-01T13:38:45.907Z",
+    "last7d": 130049
   },
   "abiy": {
     "total": 6721458,
-    "lastUpdated": "2026-07-31T14:25:38.666Z",
-    "last7d": 1550
+    "lastUpdated": "2026-08-01T13:38:59.047Z",
+    "last7d": 1740
   },
   "sheinbaum": {
     "total": 49050856,
-    "lastUpdated": "2026-07-31T14:27:38.438Z",
-    "last7d": 138242
+    "lastUpdated": "2026-08-01T13:40:40.786Z",
+    "last7d": 139362
   },
   "takaichi": {
     "total": 2656592,
-    "lastUpdated": "2026-07-31T14:34:44.929Z",
-    "last7d": 57213
+    "lastUpdated": "2026-08-01T13:47:12.605Z",
+    "last7d": 55555
   },
   "sisi": {
     "total": 2921668,
-    "lastUpdated": "2026-07-31T14:36:20.481Z",
-    "last7d": 6306
+    "lastUpdated": "2026-08-01T13:48:40.104Z",
+    "last7d": 6258
   },
   "marcos": {
     "total": 1174288,
-    "lastUpdated": "2026-07-31T14:37:18.817Z",
-    "last7d": 4920
+    "lastUpdated": "2026-08-01T13:49:31.433Z",
+    "last7d": 4739
   },
   "tshisekedi": {
     "total": 2474390,
-    "lastUpdated": "2026-07-31T14:38:00.333Z",
-    "last7d": 8533
+    "lastUpdated": "2026-08-01T13:50:17.171Z",
+    "last7d": 8782
   },
   "tolam": {
     "total": 85952,
-    "lastUpdated": "2026-07-31T14:38:30.708Z",
-    "last7d": 723
+    "lastUpdated": "2026-08-01T13:50:46.728Z",
+    "last7d": 706
   },
   "pezeshkian": {
     "total": 1886713,
-    "lastUpdated": "2026-07-31T14:38:44.189Z",
-    "last7d": 8026
+    "lastUpdated": "2026-08-01T13:50:59.892Z",
+    "last7d": 7782
   },
   "erdogan": {
     "total": 157733975,
-    "lastUpdated": "2026-07-31T14:39:54.478Z",
-    "last7d": 283915
+    "lastUpdated": "2026-08-01T13:52:03.136Z",
+    "last7d": 288959
   },
   "merz": {
     "total": 10927835,
-    "lastUpdated": "2026-07-31T14:43:29.522Z",
-    "last7d": 0
+    "lastUpdated": "2026-08-01T13:55:39.007Z",
+    "last7d": 66775
   },
   "samia": {
     "total": 2761214,
-    "lastUpdated": "2026-07-31T14:45:26.046Z",
-    "last7d": 1556
+    "lastUpdated": "2026-08-01T13:57:32.993Z",
+    "last7d": 1585
   },
   "anutin": {
     "total": 10651,
-    "lastUpdated": "2026-07-31T14:46:59.232Z",
+    "lastUpdated": "2026-08-01T13:58:58.672Z",
     "last7d": 104
   },
   "starmer": {
     "total": 50437764,
-    "lastUpdated": "2026-07-31T14:47:18.160Z",
-    "last7d": 44462
+    "lastUpdated": "2026-08-01T13:59:11.743Z",
+    "last7d": 42118
   },
   "macron": {
     "total": 74352168,
-    "lastUpdated": "2026-07-31T14:50:51.822Z",
-    "last7d": 162894
+    "lastUpdated": "2026-08-01T14:02:55.889Z",
+    "last7d": 164398
   },
   "ramaphosa": {
     "total": 8588685,
-    "lastUpdated": "2026-07-31T14:55:14.690Z",
-    "last7d": 15728
+    "lastUpdated": "2026-08-01T14:06:41.819Z",
+    "last7d": 14851
   },
   "meloni": {
     "total": 20376382,
-    "lastUpdated": "2026-07-31T14:59:35.959Z",
-    "last7d": 84195
+    "lastUpdated": "2026-08-01T14:10:40.558Z",
+    "last7d": 120293
   },
   "ruto": {
     "total": 20947002,
-    "lastUpdated": "2026-07-31T15:05:10.336Z",
-    "last7d": 87958
+    "lastUpdated": "2026-08-01T14:15:37.271Z",
+    "last7d": 88017
   },
   "minaung": {
     "total": 659544,
-    "lastUpdated": "2026-07-31T15:10:36.459Z",
-    "last7d": 133
+    "lastUpdated": "2026-08-01T14:20:57.761Z",
+    "last7d": 167
   },
   "petro": {
     "total": 106377939,
-    "lastUpdated": "2026-07-31T15:10:49.874Z",
-    "last7d": 326736
+    "lastUpdated": "2026-08-01T14:21:11.089Z",
+    "last7d": 320924
   },
   "burhan": {
     "total": 121742,
-    "lastUpdated": "2026-07-31T15:18:01.696Z",
-    "last7d": 478
+    "lastUpdated": "2026-08-01T14:27:32.585Z",
+    "last7d": 495
   },
   "museveni": {
     "total": 9135459,
-    "lastUpdated": "2026-07-31T15:18:43.161Z",
-    "last7d": 21815
+    "lastUpdated": "2026-08-01T14:28:13.116Z",
+    "last7d": 21980
   },
   "sanchez": {
     "total": 29841018,
-    "lastUpdated": "2026-07-31T15:23:11.725Z",
-    "last7d": 240744
+    "lastUpdated": "2026-08-01T14:31:29.984Z",
+    "last7d": 335159
   },
-  "_lastGlobalUpdate": "2026-07-31T15:35:51.159Z",
+  "_lastGlobalUpdate": "2026-08-01T14:42:30.186Z",
   "modi_mentions_2025": {
     "total": 16881106,
     "year": 2025,
@@ -466,8 +466,8 @@
     "fetchedAt": "2026-04-27T21:40:36.634Z"
   },
   "jmilei": {
-    "last7d": 282910,
-    "lastUpdated": "2026-07-31T15:28:58.856Z",
+    "last7d": 287732,
+    "lastUpdated": "2026-08-01T14:36:29.487Z",
     "total": 67050716
   }
 }
